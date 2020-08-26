@@ -88,11 +88,11 @@
 #define MICROPY_OPT_MPZ_BITWISE     (1)
 
 // sd card
-#define MICROPY_HW_HAS_SDCARD       (1)
+#define MICROPY_HW_HAS_SDCARD       (0)
 
 // fatfs configuration used in ffconf.h
 #define MICROPY_FATFS_ENABLE_LFN       (1)
-#define MICROPY_FATFS_LFN_CODE_PAGE    (437) /* 1=SFN/ANSI 437=LFN/U.S.(OEM) */
+#define MICROPY_FATFS_LFN_CODE_PAGE    437 /* 1=SFN/ANSI 437=LFN/U.S.(OEM) */
 #define MICROPY_FATFS_USE_LABEL        (1)
 #define MICROPY_FATFS_RPATH            (2)
 #define MICROPY_FATFS_MULTI_PARTITION  (1)
@@ -174,6 +174,8 @@ static inline mp_uint_t disable_irq(void) {
 extern const struct _mp_obj_module_t machine_module;
 extern const struct _mp_obj_module_t pyb_module;
 extern const struct _mp_obj_module_t mp_module_uos;
+extern const struct _mp_obj_module_t test_module;
+extern const struct _mp_obj_module_t i2c_module;
 //extern const struct _mp_obj_module_t pin_module;
 
 // extra built in names to add to the global namespace
@@ -201,6 +203,8 @@ extern const struct _mp_obj_module_t mp_module_uos;
 #define MICROPY_PORT_BUILTIN_MODULES \
         { MP_ROM_QSTR(MP_QSTR_umachine), MP_ROM_PTR(&machine_module) }, \
         { MP_ROM_QSTR(MP_QSTR_pyb), MP_ROM_PTR(&pyb_module) }, \
+        { MP_ROM_QSTR(MP_QSTR_test), MP_ROM_PTR(&test_module) }, \
+        { MP_ROM_QSTR(MP_QSTR_i2c), MP_ROM_PTR(&i2c_module) }, \
        { MP_ROM_QSTR(MP_QSTR_uos), MP_ROM_PTR(&mp_module_uos) }, 
 
 #define MICROPY_PORT_CONSTANTS \

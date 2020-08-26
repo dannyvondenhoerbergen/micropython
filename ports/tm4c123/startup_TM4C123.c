@@ -66,6 +66,28 @@ extern void _start     (void) __attribute__((noreturn)); /* PreeMain (C library 
  *----------------------------------------------------------------------------*/
 void Default_Handler(void) __attribute__ ((noreturn));
 void Reset_Handler  (void) __attribute__ ((noreturn));
+/* The following is added afterwards by Schlapps, Hoerber*/ 
+void NMI_Handler            (void) __attribute__ ((noreturn));
+void HardFault_Handler      (void) __attribute__ ((noreturn));
+void MemManage_Handler      (void) __attribute__ ((noreturn));
+void BusFault_Handler       (void) __attribute__ ((noreturn));
+void UsageFault_Handler     (void) __attribute__ ((noreturn));
+void SVC_Handler            (void) __attribute__ ((noreturn));
+void DebugMon_Handler       (void) __attribute__ ((noreturn));
+void PendSV_Handler         (void) __attribute__ ((noreturn));
+void SysTick_Handler        (void) __attribute__ ((noreturn));
+
+void Interrupt0_Handler     (void) __attribute__ ((noreturn));
+void Interrupt1_Handler     (void) __attribute__ ((noreturn));
+void Interrupt2_Handler     (void) __attribute__ ((noreturn));
+void Interrupt3_Handler     (void) __attribute__ ((noreturn));
+void Interrupt4_Handler     (void) __attribute__ ((noreturn));
+void Interrupt5_Handler     (void) __attribute__ ((noreturn));
+void Interrupt6_Handler     (void) __attribute__ ((noreturn));
+void Interrupt7_Handler     (void) __attribute__ ((noreturn));
+void Interrupt8_Handler     (void) __attribute__ ((noreturn));
+void Interrupt9_Handler     (void) __attribute__ ((noreturn));
+/* End of 'added afterwards' */
 
 
 /*----------------------------------------------------------------------------
@@ -84,6 +106,15 @@ void Reset_Handler  (void) __attribute__ ((noreturn));
 // #if __HEAP_SIZE > 0
 // static uint8_t heap[__HEAP_SIZE]   __attribute__ ((aligned(8), used, section(".heap")));
 // #endif
+
+
+/*----------------------------------------------------------------------------
+  Default Handler for Exceptions / Interrupts
+ *----------------------------------------------------------------------------*/
+void Default_Handler(void) {
+
+  while(1);
+}
 
 
 /*----------------------------------------------------------------------------
@@ -363,13 +394,4 @@ void Reset_Handler(void) {
 
   //SystemInit();                             /* CMSIS System Initialization */
   _start();                                 /* Enter PreeMain (C library entry point) */
-}
-
-
-/*----------------------------------------------------------------------------
-  Default Handler for Exceptions / Interrupts
- *----------------------------------------------------------------------------*/
-void Default_Handler(void) {
-
-  while(1);
 }

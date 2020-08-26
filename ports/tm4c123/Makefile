@@ -11,12 +11,12 @@
 # Enables Debugging friendly settings, change requires full rebuild
 DEBUG ?= 1
 # Enables Link Time Optimization, only when not compiling for DEBUG, change requires full rebuild
-LINK_TIME_OPT = 1
+LINK_TIME_OPT = 0
 
 # Location of the TivaWare library
 # Can be pointed to a newer version if desired
-TIVAWARE_LIB = /mnt/c/ti/TivaWare
-#TIVAWARE_LIB = /home/raphael/ti/tivaware
+#TIVAWARE_LIB = /mnt/c/ti/TivaWare
+TIVAWARE_LIB = /home/danny/Workspace/tivaware
 
 # Name of the Project (and the resulting binary file)
 PROJECT_NAME = uPY_TM4C123
@@ -173,7 +173,7 @@ SRC_LIB = $(addprefix lib/,\
 	utils/pyexec.c \
 	utils/sys_stdio_mphal.c \
 	oofatfs/ff.c \
-	oofatfs/option/unicode.c \
+	oofatfs/ffunicode.c \
 	)
 
 # Module sources
@@ -188,13 +188,15 @@ MODS_SRC_C = $(addprefix mods/,\
 	systick.c \
 	handlers.c \
 	spi.c \
-	sdcard.c \
 	moduos.c \
 	pendsv.c \
 	pybthread.c \
 	modutime.c \
 	irq.c \
 	mpthreadport.c \
+	fatfs_port.c \
+	modKosaken.c \
+	i2c_test.c \
 )
 	# fatfs_port.c \
 	# irq.c \

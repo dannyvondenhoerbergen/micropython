@@ -4,7 +4,6 @@
  * The MIT License (MIT)
  *
  * Copyright (c) 2013, 2014 Damien P. George
- * Copyright (c) 2015 Daniel Campora
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,14 +23,17 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+ 
+#ifndef MICROPY_INCLUDED_STM32_I2C_H
+#define MICROPY_INCLUDED_STM32_I2C_H
 
-// for machine module
-Q(/)
+ #include <stdint.h>
+ #include "inc/hw_i2c.h"
+ #include "driverlib/i2c.h"
+ #include "mphalport.h"
+
+void i2c_init0(void);
 
 
-// entries for sys.path
-Q(/flash)
-Q(/flash/lib)
 
-// for test module
-Q(test_module)
+#endif // MICROPY_INCLUDED_STM32_I2C_H

@@ -756,7 +756,7 @@ DRESULT sd_disk_ioctl (
 /* FatFs module. Any valid time must be returned even if   */
 /* the system does not support a real time clock.          */
 
-uint32_t get_fattime (void)
+/*uint32_t get_fattime (void)
 {
 
     return    ((2007UL-1980) << 25)    // Year = 2007
@@ -767,7 +767,7 @@ uint32_t get_fattime (void)
             | (0U >> 1)                // Sec = 0
             ;
 
-}
+}*/
 
 void sdcard_init(void) {
     sd_power_on();
