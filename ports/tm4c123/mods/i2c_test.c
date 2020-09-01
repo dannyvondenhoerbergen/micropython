@@ -26,8 +26,8 @@ void i2c_init0() {}
 void InitI2C0(void)
 {
     //enable GPIO peripheral that contains I2C 0
-    SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOB);
-    while(!SysCtlPeripheralReady(SYSCTL_PERIPH_GPIOB));
+    //SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOB);
+    //while(!SysCtlPeripheralReady(SYSCTL_PERIPH_GPIOB));
     
     //disable I2C module 0
     SysCtlPeripheralDisable(SYSCTL_PERIPH_I2C0);
@@ -38,17 +38,18 @@ void InitI2C0(void)
     //enable I2C module 0
     SysCtlPeripheralEnable(SYSCTL_PERIPH_I2C0);
     
-     
+    mp_hal_pin_config_alt(pin_PB2, PIN_FN_I2C, 0);
+    mp_hal_pin_config_alt(pin_PB3, PIN_FN_I2C, 0);
     // Configure the pin muxing for I2C0 functions on port B2 and B3.
-    GPIOPinConfigure(GPIO_PB2_I2C0SCL);
-    GPIOPinConfigure(GPIO_PB3_I2C0SDA);
+    //GPIOPinConfigure(GPIO_PB2_I2C0SCL);
+    //GPIOPinConfigure(GPIO_PB3_I2C0SDA);
      
     //Versuch: Interrupt zu I2C0 aus machen
     //IntDisable(INT_I2C0);
     //I2CMasterDisable(I2C0_BASE);
      
     // Select the I2C function for these pins.
-    GPIOPinTypeI2CSCL(GPIO_PORTB_BASE, GPIO_PIN_2); // 0x40005000 = GPIO_PORTB_BASE
+    //GPIOPinTypeI2CSCL(GPIO_PORTB_BASE, GPIO_PIN_2); // 0x40005000 = GPIO_PORTB_BASE
     //GPIOPinTypeI2C(0x40005000, GPIO_PIN_3);
  
     // Enable and initialize the I2C0 master module.  Use the system clock for
