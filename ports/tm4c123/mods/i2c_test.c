@@ -20,6 +20,8 @@
 void i2c_init0() {}
 
 
+// TEST COMMIT
+
 // INITIALIZATION
 //initialize I2C module 0
 //Slightly modified version of TI's example code
