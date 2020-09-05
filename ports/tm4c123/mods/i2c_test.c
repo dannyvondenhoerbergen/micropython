@@ -20,7 +20,7 @@
 void i2c_init0() {}
 
 
-// TEST COMMIT
+// TEST COMMIT 2
 
 // INITIALIZATION
 //initialize I2C module 0
