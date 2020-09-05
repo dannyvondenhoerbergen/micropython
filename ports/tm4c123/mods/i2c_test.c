@@ -14,17 +14,16 @@
 #include "py/runtime.h"
 #include "py/obj.h"
 #include "py/builtin.h"
-// #include "<MODULE>.c"
 
 
 void i2c_init0() {}
 
 
-// TEST COMMIT 2
 
 // INITIALIZATION
 //initialize I2C module 0
 //Slightly modified version of TI's example code
+
 void InitI2C0(void)
 {
     //enable GPIO peripheral that contains I2C 0
@@ -40,15 +39,14 @@ void InitI2C0(void)
     //enable I2C module 0
     SysCtlPeripheralEnable(SYSCTL_PERIPH_I2C0);
     
-    mp_hal_pin_config_alt(pin_PB2, PIN_FN_I2C, 0);
-    mp_hal_pin_config_alt(pin_PB3, PIN_FN_I2C, 0);
-    // Configure the pin muxing for I2C0 functions on port B2 and B3.
-    //GPIOPinConfigure(GPIO_PB2_I2C0SCL);
-    //GPIOPinConfigure(GPIO_PB3_I2C0SDA);
      
     //Versuch: Interrupt zu I2C0 aus machen
     //IntDisable(INT_I2C0);
     //I2CMasterDisable(I2C0_BASE);
+
+    // config of Alternative Function for Pins
+    mp_hal_pin_config_alt(pin_PB2, PIN_FN_I2C, 0);
+    mp_hal_pin_config_alt(pin_PB3, PIN_FN_I2C, 0);
      
     // Select the I2C function for these pins.
     //GPIOPinTypeI2CSCL(GPIO_PORTB_BASE, GPIO_PIN_2); // 0x40005000 = GPIO_PORTB_BASE
@@ -78,18 +76,18 @@ void writeI2C0(uint16_t device_address, uint16_t device_register, uint8_t device
    I2CMasterControl(I2C0_BASE, I2C_MASTER_CMD_BURST_SEND_START);
 
    //wait for MCU to finish transaction
-   while(I2CMasterBusy(I2C0_BASE));
+   // while(I2CMasterBusy(I2C0_BASE));
 
-   I2CMasterSlaveAddrSet(I2C0_BASE, device_address, true);
+   // I2CMasterSlaveAddrSet(I2C0_BASE, device_address, true);
 
    //specify data to be written to the above mentioned device_register
-   I2CMasterDataPut(I2C0_BASE, device_data);
+   // I2CMasterDataPut(I2C0_BASE, device_data);
 
    //wait while checking for MCU to complete the transaction
-   I2CMasterControl(I2C0_BASE, I2C_MASTER_CMD_BURST_RECEIVE_FINISH);
+   // I2CMasterControl(I2C0_BASE, I2C_MASTER_CMD_BURST_RECEIVE_FINISH);
 
    //wait for MCU & device to complete transaction
-   while(I2CMasterBusy(I2C0_BASE));
+   // while(I2CMasterBusy(I2C0_BASE));
 }
 
 
@@ -103,7 +101,7 @@ void writeI2C0(uint16_t device_address, uint16_t device_register, uint8_t device
 /*
 	Wrapping Function
 */
-STATIC mp_obj_t i2c_testfunction() {
+STATIC mp_obj_t i2c_init() {
 	
     // calling I2C-Init function
     InitI2C0();
@@ -131,7 +129,7 @@ STATIC mp_obj_t i2c_sendtest() {
 /*
 	Define uPy-Fuctions
 */
-STATIC MP_DEFINE_CONST_FUN_OBJ_0(i2c_testfunction_obj, i2c_testfunction);
+STATIC MP_DEFINE_CONST_FUN_OBJ_0(i2c_init_obj, i2c_init);
 STATIC MP_DEFINE_CONST_FUN_OBJ_0(i2c_sendtest_obj, i2c_sendtest);
 
 
@@ -140,7 +138,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_0(i2c_sendtest_obj, i2c_sendtest);
 */
 STATIC const mp_map_elem_t i2c_globals_table[]= {
 	{ MP_OBJ_NEW_QSTR(MP_QSTR___name__), MP_OBJ_NEW_QSTR(MP_QSTR_i2c) },
-	{ MP_OBJ_NEW_QSTR(MP_QSTR_testfunction), (mp_obj_t)&i2c_testfunction_obj },
+	{ MP_OBJ_NEW_QSTR(MP_QSTR_init), (mp_obj_t)&i2c_init_obj },
 	{ MP_OBJ_NEW_QSTR(MP_QSTR_sendtest), (mp_obj_t)&i2c_sendtest_obj },
 };
 
