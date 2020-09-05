@@ -64,69 +64,30 @@ void InitI2C0(void)
 
 
 //sends an I2C command to the specified slave
-void I2CSend(uint8_t slave_addr, uint8_t num_of_args, ...)
+void writeI2C0(uint16_t device_address, uint16_t device_register, uint8_t device_data)
 {
-    // Tell the master module what address it will place on the bus when
-    // communicating with the slave.
-    I2CMasterSlaveAddrSet(I2C0_BASE, slave_addr, false);
-     
-    //stores list of variable number of arguments
-    va_list vargs;
-     
-    //specifies the va_list to "open" and the last fixed argument
-    //so vargs knows where to start looking
-    va_start(vargs, num_of_args);
-     
-    //put data to be sent into FIFO
-    I2CMasterDataPut(I2C0_BASE, va_arg(vargs, uint32_t));
-     
-    //if there is only one argument, we only need to use the
-    //single send I2C function
-    if(num_of_args == 1)
-    {
-        //Initiate send of data from the MCU
-        I2CMasterControl(I2C0_BASE, I2C_MASTER_CMD_SINGLE_SEND);
-         
-        // Wait until MCU is done transferring.
-        while(I2CMasterBusy(I2C0_BASE));
-         
-        //"close" variable argument list
-        va_end(vargs);
-    }
-     
-    //otherwise, we start transmission of multiple bytes on the
-    //I2C bus
-    else
-    {
-        //Initiate send of data from the MCU
-        I2CMasterControl(I2C0_BASE, I2C_MASTER_CMD_BURST_SEND_START);
-         
-        // Wait until MCU is done transferring.
-        while(I2CMasterBusy(I2C0_BASE));
-         
-        //send num_of_args-2 pieces of data, using the
-        //BURST_SEND_CONT command of the I2C module
-        for(uint8_t i = 1; i < (num_of_args - 1); i++)
-        {
-            //put next piece of data into I2C FIFO
-            I2CMasterDataPut(I2C0_BASE, va_arg(vargs, uint32_t));
-            //send next data that was just placed into FIFO
-            I2CMasterControl(I2C0_BASE, I2C_MASTER_CMD_BURST_SEND_CONT);
-     
-            // Wait until MCU is done transferring.
-            while(I2CMasterBusy(I2C0_BASE));
-        }
-     
-        //put last piece of data into I2C FIFO
-        I2CMasterDataPut(I2C0_BASE, va_arg(vargs, uint32_t));
-        //send next data that was just placed into FIFO
-        I2CMasterControl(I2C0_BASE, I2C_MASTER_CMD_BURST_SEND_FINISH);
-        // Wait until MCU is done transferring.
-        while(I2CMasterBusy(I2C0_BASE));
-         
-        //"close" variable args list
-        va_end(vargs);
-    }
+   //specify that we want to communicate to device address with an intended write to bus
+   I2CMasterSlaveAddrSet(I2C0_BASE, device_address, false);
+
+   //register to be read
+   I2CMasterDataPut(I2C0_BASE, device_register);
+
+   //send control byte and register address byte to slave device
+   I2CMasterControl(I2C0_BASE, I2C_MASTER_CMD_BURST_SEND_START);
+
+   //wait for MCU to finish transaction
+   while(I2CMasterBusy(I2C0_BASE));
+
+   I2CMasterSlaveAddrSet(I2C0_BASE, device_address, true);
+
+   //specify data to be written to the above mentioned device_register
+   I2CMasterDataPut(I2C0_BASE, device_data);
+
+   //wait while checking for MCU to complete the transaction
+   I2CMasterControl(I2C0_BASE, I2C_MASTER_CMD_BURST_RECEIVE_FINISH);
+
+   //wait for MCU & device to complete transaction
+   while(I2CMasterBusy(I2C0_BASE));
 }
 
 
@@ -154,10 +115,22 @@ STATIC mp_obj_t i2c_testfunction() {
 }
 
 
+/* Testing the Send Function */
+
+STATIC mp_obj_t i2c_sendtest() {
+
+    // calling I2C-Send Function
+    writeI2C0(5, 3, 5);
+
+    return mp_const_none;
+}
+
+
 /*
-	Define uPy-Fuction
+	Define uPy-Fuctions
 */
 STATIC MP_DEFINE_CONST_FUN_OBJ_0(i2c_testfunction_obj, i2c_testfunction);
+STATIC MP_DEFINE_CONST_FUN_OBJ_0(i2c_sendtest_obj, i2c_sendtest);
 
 
 /*
@@ -166,6 +139,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_0(i2c_testfunction_obj, i2c_testfunction);
 STATIC const mp_map_elem_t i2c_globals_table[]= {
 	{ MP_OBJ_NEW_QSTR(MP_QSTR___name__), MP_OBJ_NEW_QSTR(MP_QSTR_i2c) },
 	{ MP_OBJ_NEW_QSTR(MP_QSTR_testfunction), (mp_obj_t)&i2c_testfunction_obj },
+	{ MP_OBJ_NEW_QSTR(MP_QSTR_sendtest), (mp_obj_t)&i2c_sendtest_obj },
 };
 
 
