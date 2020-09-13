@@ -1,6 +1,6 @@
+#include <stdint.h>
 #include <stdarg.h>
 #include <stdbool.h>
-#include <stdint.h>
 #include "inc/hw_i2c.h"
 #include "inc/hw_memmap.h"
 #include "inc/hw_types.h"
@@ -76,7 +76,7 @@ void writeI2C0(uint16_t device_address, uint16_t device_register, uint8_t device
    I2CMasterControl(I2C0_BASE, I2C_MASTER_CMD_BURST_SEND_START);
 
    //wait for MCU to finish transaction
-   // while(I2CMasterBusy(I2C0_BASE));
+   while(I2CMasterBusy(I2C0_BASE));
 
    // I2CMasterSlaveAddrSet(I2C0_BASE, device_address, true);
 

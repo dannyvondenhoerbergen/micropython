@@ -27,12 +27,21 @@
 #ifndef MICROPY_INCLUDED_STM32_I2C_H
 #define MICROPY_INCLUDED_STM32_I2C_H
 
- #include <stdint.h>
- #include "inc/hw_i2c.h"
- #include "driverlib/i2c.h"
- #include "mphalport.h"
+#include <stdint.h>
+#include <stdio.h>
+#include <stdarg.h>
+#include <stdbool.h>
+#include "inc/hw_i2c.h"
+#include "driverlib/i2c.h"
+#include "mphalport.h"
 
 void i2c_init0(void);
+
+void InitI2C0(void);
+
+void writeI2C0(uint16_t device_address, uint16_t device_register, uint8_t device_data);
+
+
 
 
 

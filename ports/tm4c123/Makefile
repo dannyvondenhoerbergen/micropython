@@ -16,7 +16,7 @@ LINK_TIME_OPT = 0
 # Location of the TivaWare library
 # Can be pointed to a newer version if desired
 #TIVAWARE_LIB = /mnt/c/ti/TivaWare
-TIVAWARE_LIB = /home/danny/Workspace/tivaware
+TIVAWARE_LIB = C:/Users/User/Documents/Micropython/micropython_funzt/tivaware
 
 # Name of the Project (and the resulting binary file)
 PROJECT_NAME = uPY_TM4C123

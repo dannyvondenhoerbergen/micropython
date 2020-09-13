@@ -1,0 +1,6 @@
+eclipse.preferences.version=1
+environment/project/cdt.managedbuild.toolchain.gnu.cross.base.1193646521/PATH/delimiter=;
+environment/project/cdt.managedbuild.toolchain.gnu.cross.base.1193646521/PATH/operation=replace
+environment/project/cdt.managedbuild.toolchain.gnu.cross.base.1193646521/PATH/value=C\:/ti/ccs1010/ccs/eclipse/jre/bin/server;C\:/ti/ccs1010/ccs/eclipse/jre/bin;C\:/ti/ccs1010/ccs/eclipse/jre/lib/amd64;C\:\\WINDOWS\\system32;C\:\\WINDOWS;C\:\\WINDOWS\\System32\\Wbem;C\:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\;C\:\\Program Files\\Intel\\WiFi\\bin\\;C\:\\Program Files\\Common Files\\Intel\\WirelessCommon\\;C\:\\WINDOWS\\System32\\OpenSSH\\;C\:\\Program Files\\Calibre2\\;C\:\\Program Files\\Git\\cmd;C\:\\Program Files\\PuTTY\\;C\:\\Users\\User\\AppData\\Local\\Microsoft\\WindowsApps;;C\:\\Users\\User\\AppData\\Local\\Programs\\Microsoft VS Code\\bin;C\:\\ti\\ccs1010\\ccs\\eclipse;C\:\\Users\\User\\Documents\\Micropython\\micropython_funzt\\tivaware\\driverlib
+environment/project/cdt.managedbuild.toolchain.gnu.cross.base.1193646521/append=true
+environment/project/cdt.managedbuild.toolchain.gnu.cross.base.1193646521/appendContributed=true

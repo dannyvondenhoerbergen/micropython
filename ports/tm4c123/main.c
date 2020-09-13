@@ -439,6 +439,8 @@ int tm4c_main(int reset_mode) {
     // TODO 
 //     #if MICROPY_HW_ENABLE_HW_I2C
     i2c_init0();
+    InitI2C0();
+    writeI2C0(1,1,1);
 //     #endif
     #if MICROPY_HW_HAS_SDCARD
     //sdcard_init();
