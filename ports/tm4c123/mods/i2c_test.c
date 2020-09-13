@@ -24,42 +24,91 @@ void i2c_init0() {}
 //initialize I2C module 0
 //Slightly modified version of TI's example code
 
-void InitI2C0(void)
+void InitI2C0(mp_obj_t self_in)
 {
-    //enable GPIO peripheral that contains I2C 0
-    //SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOB);
-    //while(!SysCtlPeripheralReady(SYSCTL_PERIPH_GPIOB));
+    machine_hard_i2c_obj_t *self = (machine_hard_i2c_obj_t*) self_in;
+    const pin_obj_t *pins[2] = { NULL, NULL};
+
+    if (1) {
+    #if defined(MICROPY_HW_I2C0_SCL)
+    } else if (self->i2c_id == I2C_0) {
+        self->i2c_base = I2C0_BASE;
+        self->periph = SYSCTL_PERIPH_I2C0;
+        self->master_regs = (periph_i2c_master_t*)I2C0_BASE;
+        self->slave_regs = (periph_i2c_slave_t*)(I2C0_BASE + 0x800);
+        self->status_control = (periph_i2c_stctl_t*)(I2C0_BASE + 0xFC0);
+        self->irqn = INT_I2C0;
+        pins[0] = MICROPY_HW_I2C0_SCL;
+        #if defined(MICROPY_HW_I2C0_SDA)
+        pins[1] = MICROPY_HW_I2C0_SDA;
+        #endif
+    #endif
+    #if defined(MICROPY_HW_I2C1_SCL)
+    } else if (self->i2c_id == I2C_1) {
+        self->i2c_base = I2C1_BASE;
+        self->periph = SYSCTL_PERIPH_I2C1;
+        self->master_regs = (periph_i2c_master_t*)I2C1_BASE;
+        self->slave_regs = (periph_i2c_slave_t*)(I2C1_BASE + 0x800);
+        self->status_control = (periph_i2c_stctl_t*)(I2C1_BASE + 0xFC0);
+        self->irqn = INT_I2C1;
+        pins[0] = MICROPY_HW_I2C1_SCL;
+        #if defined(MICROPY_HW_I2C1_SDA)
+        pins[1] = MICROPY_HW_I2C1_SDA;
+        #endif
+    #endif
+    #if defined(MICROPY_HW_I2C2_SCL)
+    } else if (self->i2c_id == I2C_2) {
+        self->i2c_base = I2C2_BASE;
+        self->periph = SYSCTL_PERIPH_I2C2;
+        self->master_regs = (periph_i2c_master_t*)I2C2_BASE;
+        self->slave_regs = (periph_i2c_slave_t*)(I2C2_BASE + 0x800);
+        self->status_control = (periph_i2c_stctl_t*)(I2C2_BASE + 0xFC0);
+        self->irqn = INT_I2C2;
+        pins[0] = MICROPY_HW_I2C2_SCL;
+        #if defined(MICROPY_HW_I2C2_SDA)
+        pins[1] = MICROPY_HW_I2C2_SDA;
+        #endif
+    #endif
+    #if defined(MICROPY_HW_I2C3_SCL)
+    } defined(MICROPY_HW_I2C3_SCL)
+    } else if (self->i2c_id == I2C_3) {
+        self->i2c_base = I2C3_BASE;
+        self->periph = SYSCTL_PERIPH_I2C3;
+        self->master_regs = (periph_i2c_master_t*)I2C3_BASE;
+        self->slave_regs = (periph_i2c_slave_t*)(I2C3_BASE + 0x800);
+        self->status_control = (periph_i2c_stctl_t*)(I2C3_BASE + 0xFC0);
+        self->irqn = INT_I2C3;
+        pins[0] = MICROPY_HW_I2C23SCL;
+        #if defined(MICROPY_HW_I2C3_SDA)
+        pins[1] = MICROPY_HW_I2C3_SDA;
+        #endif
+    #endif
+    } else {
+        // I2C does not exist for this board (shouldn't get here, should be checked by caller)
+        return;
+    }
     
     //disable I2C module 0
-    SysCtlPeripheralDisable(SYSCTL_PERIPH_I2C0);
+    SysCtlPeripheralDisable(self->periph);
     
     //reset module
-    SysCtlPeripheralReset(SYSCTL_PERIPH_I2C0);
+    SysCtlPeripheralReset(self->periph);
     
     //enable I2C module 0
-    SysCtlPeripheralEnable(SYSCTL_PERIPH_I2C0);
-    
-     
-    //Versuch: Interrupt zu I2C0 aus machen
-    //IntDisable(INT_I2C0);
-    //I2CMasterDisable(I2C0_BASE);
+    SysCtlPeripheralEnable(self->periph);
 
     // config of Alternative Function for Pins
-    mp_hal_pin_config_alt(pin_PB2, PIN_FN_I2C, 0);
-    mp_hal_pin_config_alt(pin_PB3, PIN_FN_I2C, 0);
-     
-    // Select the I2C function for these pins.
-    //GPIOPinTypeI2CSCL(GPIO_PORTB_BASE, GPIO_PIN_2); // 0x40005000 = GPIO_PORTB_BASE
-    //GPIOPinTypeI2C(0x40005000, GPIO_PIN_3);
+    mp_hal_pin_config_alt(pins[0], PIN_FN_I2C, 0);
+    mp_hal_pin_config_alt(pins[1], PIN_FN_I2C, 0);
  
     // Enable and initialize the I2C0 master module.  Use the system clock for
     // the I2C0 module.  The last parameter sets the I2C data transfer rate.
     // If false the data rate is set to 100kbps and if true the data rate will
     // be set to 400kbps.
-    I2CMasterInitExpClk(0x40020000, SysCtlClockGet(), false); // 0x40020000 = I2C0_BASE
+    I2CMasterInitExpClk(self->i2c_base, SysCtlClockGet(), false); // 0x40020000 = I2C0_BASE
      
     //clear I2C FIFOs
-    HWREG(0x40020000 + I2C_O_FIFOCTL) = 80008000;
+    HWREG(self->i2c_base + I2C_O_FIFOCTL) = 80008000;
 }
 
 
@@ -104,7 +153,7 @@ void writeI2C0(uint16_t device_address, uint16_t device_register, uint8_t device
 STATIC mp_obj_t i2c_init() {
 	
     // calling I2C-Init function
-    InitI2C0();
+    InitI2C0(mp_obj_t i2c);
 
     // sending test value
     // I2CSend(5, 1, 5);
