@@ -78,16 +78,16 @@ void writeI2C0(uint16_t device_address, uint16_t device_register, uint8_t device
    //wait for MCU to finish transaction
    while(I2CMasterBusy(I2C0_BASE));
 
-   // I2CMasterSlaveAddrSet(I2C0_BASE, device_address, true);
+   I2CMasterSlaveAddrSet(I2C0_BASE, device_address, false);
 
    //specify data to be written to the above mentioned device_register
-   // I2CMasterDataPut(I2C0_BASE, device_data);
+   I2CMasterDataPut(I2C0_BASE, device_data);
 
    //wait while checking for MCU to complete the transaction
-   // I2CMasterControl(I2C0_BASE, I2C_MASTER_CMD_BURST_RECEIVE_FINISH);
+   I2CMasterControl(I2C0_BASE, I2C_MASTER_CMD_BURST_RECEIVE_FINISH);
 
    //wait for MCU & device to complete transaction
-   // while(I2CMasterBusy(I2C0_BASE));
+   while(I2CMasterBusy(I2C0_BASE));
 }
 
 
@@ -117,10 +117,15 @@ STATIC mp_obj_t i2c_init() {
 
 /* Testing the Send Function */
 
-STATIC mp_obj_t i2c_sendtest() {
+STATIC mp_obj_t i2c_write(mp_obj_t dev_address, mp_obj_t reg_address, mp_obj_t i2c_data) {
+
+    // casting Micropython data types to c data types
+    uint16_t int_dev_address = mp_obj_get_int(dev_address);
+    uint16_t int_reg_address = mp_obj_get_int(reg_address);
+    uint8_t int_i2c_data = mp_obj_get_int(i2c_data);
 
     // calling I2C-Send Function
-    writeI2C0(5, 3, 5);
+    writeI2C0(int_dev_address, int_reg_address, int_i2c_data);
 
     return mp_const_none;
 }
@@ -130,7 +135,7 @@ STATIC mp_obj_t i2c_sendtest() {
 	Define uPy-Fuctions
 */
 STATIC MP_DEFINE_CONST_FUN_OBJ_0(i2c_init_obj, i2c_init);
-STATIC MP_DEFINE_CONST_FUN_OBJ_0(i2c_sendtest_obj, i2c_sendtest);
+STATIC MP_DEFINE_CONST_FUN_OBJ_3(i2c_write_obj, i2c_write);
 
 
 /*
@@ -139,7 +144,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_0(i2c_sendtest_obj, i2c_sendtest);
 STATIC const mp_map_elem_t i2c_globals_table[]= {
 	{ MP_OBJ_NEW_QSTR(MP_QSTR___name__), MP_OBJ_NEW_QSTR(MP_QSTR_i2c) },
 	{ MP_OBJ_NEW_QSTR(MP_QSTR_init), (mp_obj_t)&i2c_init_obj },
-	{ MP_OBJ_NEW_QSTR(MP_QSTR_sendtest), (mp_obj_t)&i2c_sendtest_obj },
+	{ MP_OBJ_NEW_QSTR(MP_QSTR_write), (mp_obj_t)&i2c_write_obj },
 };
 
 
