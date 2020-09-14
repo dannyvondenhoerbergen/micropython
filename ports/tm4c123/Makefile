@@ -197,7 +197,7 @@ MODS_SRC_C = $(addprefix mods/,\
 	mpthreadport.c \
 	fatfs_port.c \
 	modKosaken.c \
-	i2c_test.c \
+	i2c.c \
 )
 	# fatfs_port.c \
 	# irq.c \

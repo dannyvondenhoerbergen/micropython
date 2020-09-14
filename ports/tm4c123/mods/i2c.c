@@ -70,7 +70,6 @@ void InitI2C0(mp_obj_t self_in)
         #endif
     #endif
     #if defined(MICROPY_HW_I2C3_SCL)
-    } defined(MICROPY_HW_I2C3_SCL)
     } else if (self->i2c_id == I2C_3) {
         self->i2c_base = I2C3_BASE;
         self->periph = SYSCTL_PERIPH_I2C3;
@@ -78,7 +77,7 @@ void InitI2C0(mp_obj_t self_in)
         self->slave_regs = (periph_i2c_slave_t*)(I2C3_BASE + 0x800);
         self->status_control = (periph_i2c_stctl_t*)(I2C3_BASE + 0xFC0);
         self->irqn = INT_I2C3;
-        pins[0] = MICROPY_HW_I2C23SCL;
+        pins[0] = MICROPY_HW_I2C2_SCL;
         #if defined(MICROPY_HW_I2C3_SDA)
         pins[1] = MICROPY_HW_I2C3_SDA;
         #endif
@@ -140,6 +139,13 @@ void writeI2C0(uint16_t device_address, uint16_t device_register, uint8_t device
 }
 
 
+void deinitI2C0(const mp_obj_t *self_in) {
+    machine_hard_i2c_obj_t* self = (machine_hard_i2c_obj_t*) self_in;
+    //I2CDisable(self->i2c_base);
+    SysCtlPeripheralDisable(self->periph);
+}
+
+
 
 /* --------- Binding for Micropython ------------ */
 /* ---------------------------------------------- */
@@ -150,10 +156,10 @@ void writeI2C0(uint16_t device_address, uint16_t device_register, uint8_t device
 /*
 	Wrapping Function
 */
-STATIC mp_obj_t i2c_init() {
+STATIC mp_obj_t i2c_init(mp_obj_t self_in) {
 	
     // calling I2C-Init function
-    InitI2C0(mp_obj_t i2c);
+    InitI2C0(&self_in);
 
     // sending test value
     // I2CSend(5, 1, 5);
@@ -164,7 +170,7 @@ STATIC mp_obj_t i2c_init() {
 }
 
 
-/* Testing the Send Function */
+/* Write Function */
 
 STATIC mp_obj_t i2c_write(mp_obj_t dev_address, mp_obj_t reg_address, mp_obj_t i2c_data) {
 
@@ -179,12 +185,21 @@ STATIC mp_obj_t i2c_write(mp_obj_t dev_address, mp_obj_t reg_address, mp_obj_t i
     return mp_const_none;
 }
 
+/* DeInit Function */
+
+STATIC mp_obj_t i2c_deinit(mp_obj_t self_in) {
+    deinitI2C0(&self_in);
+
+    return mp_const_none;
+}
+
 
 /*
 	Define uPy-Fuctions
 */
-STATIC MP_DEFINE_CONST_FUN_OBJ_0(i2c_init_obj, i2c_init);
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(i2c_init_obj, i2c_init);
 STATIC MP_DEFINE_CONST_FUN_OBJ_3(i2c_write_obj, i2c_write);
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(i2c_deinit_obj, i2c_deinit);
 
 
 /*
@@ -194,6 +209,7 @@ STATIC const mp_map_elem_t i2c_globals_table[]= {
 	{ MP_OBJ_NEW_QSTR(MP_QSTR___name__), MP_OBJ_NEW_QSTR(MP_QSTR_i2c) },
 	{ MP_OBJ_NEW_QSTR(MP_QSTR_init), (mp_obj_t)&i2c_init_obj },
 	{ MP_OBJ_NEW_QSTR(MP_QSTR_write), (mp_obj_t)&i2c_write_obj },
+    { MP_OBJ_NEW_QSTR(MP_QSTR_deinit), (mp_obj_t)&i2c_deinit_obj },
 };
 
 
