@@ -88,6 +88,7 @@ typedef struct
 
 // i2c object
 typedef struct _machine_hard_i2c_obj_t {
+    uint16_t mode;
     mp_obj_base_t base;
     uint32_t i2c_base;
     uint32_t periph;
@@ -102,7 +103,7 @@ typedef struct _machine_hard_i2c_obj_t {
 
 void i2c_init0(void);
 
-void InitI2C0(mp_obj_t self_in);
+void InitI2C0(const mp_obj_t *self_in);
 
 void writeI2C0(uint16_t device_address, uint16_t device_register, uint8_t device_data);
 

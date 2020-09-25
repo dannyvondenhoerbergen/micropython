@@ -14,6 +14,8 @@
 #include "py/runtime.h"
 #include "py/obj.h"
 #include "py/builtin.h"
+#include "driverlib/rom.h"
+#include "driverlib/rom_map.h"
 
 
 void i2c_init0() {}
@@ -24,12 +26,12 @@ void i2c_init0() {}
 //initialize I2C module 0
 //Slightly modified version of TI's example code
 
-void InitI2C0(mp_obj_t self_in)
+void InitI2C0(const mp_obj_t *self_in)
 {
     machine_hard_i2c_obj_t *self = (machine_hard_i2c_obj_t*) self_in;
     const pin_obj_t *pins[2] = { NULL, NULL};
 
-    if (1) {
+    if (0) {
     #if defined(MICROPY_HW_I2C0_SCL)
     } else if (self->i2c_id == I2C_0) {
         self->i2c_base = I2C0_BASE;
@@ -156,10 +158,34 @@ void deinitI2C0(const mp_obj_t *self_in) {
 /*
 	Wrapping Function
 */
-STATIC mp_obj_t i2c_init(mp_obj_t self_in) {
-	
+STATIC mp_obj_t i2c_init_helper(mp_obj_t *self_in, size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+	enum{ARG_mode, ARG_id};
+    static const mp_arg_t allowed_args[] = {
+        {MP_QSTR_mode, MP_ARG_REQUIRED | MP_ARG_INT, {.u_int = 0} },    // default: Master
+        {MP_QSTR_id, MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = I2C_0} },     // default: I2C0
+    };
+
+    mp_arg_val_t args[MP_ARRAY_SIZE(allowed_args)];
+    mp_arg_parse_all(n_args, pos_args, kw_args, MP_ARRAY_SIZE(allowed_args), allowed_args, args);
+
+    machine_hard_i2c_obj_t *self = (machine_hard_i2c_obj_t*)self_in; 
+
+    if(args[ARG_mode].u_int > 2)
+    {
+        nlr_raise(mp_obj_new_exception_msg(&mp_type_ValueError, "Mode accepts only MASTER or SLAVE"));
+    }
+    self->mode = args[0].u_int;
+    
+
+    if(args[ARG_id].u_int > 3)
+    {
+        nlr_raise(mp_obj_new_exception_msg(&mp_type_ValueError, "Available I2C-Ports: 0 - 3"));
+    }
+    self->i2c_id = args[1].u_int;
+    
+
     // calling I2C-Init function
-    InitI2C0(&self_in);
+    InitI2C0(self_in);
 
     // sending test value
     // I2CSend(5, 1, 5);
@@ -168,6 +194,8 @@ STATIC mp_obj_t i2c_init(mp_obj_t self_in) {
 
 	return mp_const_none;
 }
+
+
 
 
 /* Write Function */
@@ -193,11 +221,14 @@ STATIC mp_obj_t i2c_deinit(mp_obj_t self_in) {
     return mp_const_none;
 }
 
+STATIC mp_obj_t i2c_init(size_t n_args, const mp_obj_t *args, mp_map_t *kw_args) {  
+    return i2c_init_helper(args[0], n_args - 1, args + 1, kw_args);
+}
 
 /*
 	Define uPy-Fuctions
 */
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(i2c_init_obj, i2c_init);
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(i2c_init_obj, 1, i2c_init);
 STATIC MP_DEFINE_CONST_FUN_OBJ_3(i2c_write_obj, i2c_write);
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(i2c_deinit_obj, i2c_deinit);
 
