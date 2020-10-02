@@ -417,6 +417,9 @@ int tm4c_main(int reset_mode) {
     // Set the priority grouping
     // TODO NVIC_SetPriorityGrouping(NVIC_APINT_PRIGROUP_4_4);
 
+    uint8_t mode = 0;
+    uint8_t port = I2C_0;
+
     #if defined(MICROPY_BOARD_EARLY_INIT)
     MICROPY_BOARD_EARLY_INIT();
     #endif
@@ -439,6 +442,7 @@ int tm4c_main(int reset_mode) {
     // TODO 
 //     #if MICROPY_HW_ENABLE_HW_I2C
     i2c_init0();
+    i2c_init_helper((mp_obj_t)&mode, (mp_obj_t)&port);
     //InitI2C0();
     //writeI2C0(1,1,1);
 //     #endif
