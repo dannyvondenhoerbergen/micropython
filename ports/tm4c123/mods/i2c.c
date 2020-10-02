@@ -157,7 +157,7 @@ void deinitI2C0(const mp_obj_t *self_in) {
 /*
 	Wrapping Function
 */
-STATIC mp_obj_t i2c_init_helper() {
+STATIC mp_obj_t i2c_init_helper(uint8_t mode, i2c_id_t id) {
 	// enum{ARG_mode, ARG_id};
     // static const mp_arg_t allowed_args[] = {
     //     {MP_QSTR_mode, MP_ARG_REQUIRED | MP_ARG_INT, {.u_int = 0} },    // default: Master
@@ -173,8 +173,8 @@ STATIC mp_obj_t i2c_init_helper() {
     machine_hard_i2c_obj_t self = {0};
 
 
-    self.i2c_id = I2C_1;
-    self.mode = 0;
+    self.i2c_id = id;
+    self.mode = mode;
      
 
     // if(args[ARG_mode].u_int > 2)
@@ -228,14 +228,19 @@ STATIC mp_obj_t i2c_deinit(mp_obj_t self_in) {
     return mp_const_none;
 }
 
-STATIC mp_obj_t i2c_init() {  
-    return i2c_init_helper();
+STATIC mp_obj_t i2c_init(mp_obj_t mode, mp_obj_t port) {  
+
+    uint8_t i2c_mode = mp_obj_get_int(mode);
+    i2c_id_t id = mp_obj_get_int(port);
+    i2c_init_helper(i2c_mode, id);
+
+    return mp_const_none;
 }
 
 /*
 	Define uPy-Fuctions
 */
-STATIC MP_DEFINE_CONST_FUN_OBJ_0(i2c_init_obj, i2c_init);
+STATIC MP_DEFINE_CONST_FUN_OBJ_2(i2c_init_obj, i2c_init);
 STATIC MP_DEFINE_CONST_FUN_OBJ_3(i2c_write_obj, i2c_write);
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(i2c_deinit_obj, i2c_deinit);
 
