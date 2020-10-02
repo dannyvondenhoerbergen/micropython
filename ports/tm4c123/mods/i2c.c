@@ -45,42 +45,42 @@ void InitI2C0(machine_hard_i2c_obj_t *self)
         // #endif
     // #endif
     // #if defined(MICROPY_HW_I2C1_SCL)
-    // } else if (self->i2c_id == I2C_1) {
-    //     self->i2c_base = I2C1_BASE;
-    //     self->periph = SYSCTL_PERIPH_I2C1;
-    //     self->master_regs = (periph_i2c_master_t*)I2C1_BASE;
-    //     self->slave_regs = (periph_i2c_slave_t*)(I2C1_BASE + 0x800);
-    //     self->status_control = (periph_i2c_stctl_t*)(I2C1_BASE + 0xFC0);
-    //     self->irqn = INT_I2C1;
-    //     pins[0] = MICROPY_HW_I2C1_SCL;
-    //     #if defined(MICROPY_HW_I2C1_SDA)
-    //     pins[1] = MICROPY_HW_I2C1_SDA;
+    } else if (self->i2c_id == I2C_1) {
+        self->i2c_base = I2C1_BASE;
+        self->periph = SYSCTL_PERIPH_I2C1;
+        self->master_regs = (periph_i2c_master_t*)I2C1_BASE;
+        self->slave_regs = (periph_i2c_slave_t*)(I2C1_BASE + 0x800);
+        self->status_control = (periph_i2c_stctl_t*)(I2C1_BASE + 0xFC0);
+        self->irqn = INT_I2C1;
+        pins[0] = MICROPY_HW_I2C1_SCL;
+        //#if defined(MICROPY_HW_I2C1_SDA)
+        pins[1] = MICROPY_HW_I2C1_SDA;
     //     #endif
     // // #endif
     // // #if defined(MICROPY_HW_I2C2_SCL)
-    // } else if (self->i2c_id == I2C_2) {
-    //     self->i2c_base = I2C2_BASE;
-    //     self->periph = SYSCTL_PERIPH_I2C2;
-    //     self->master_regs = (periph_i2c_master_t*)I2C2_BASE;
-    //     self->slave_regs = (periph_i2c_slave_t*)(I2C2_BASE + 0x800);
-    //     self->status_control = (periph_i2c_stctl_t*)(I2C2_BASE + 0xFC0);
-    //     self->irqn = INT_I2C2;
-    //     pins[0] = MICROPY_HW_I2C2_SCL;
-    //     #if defined(MICROPY_HW_I2C2_SDA)
-    //     pins[1] = MICROPY_HW_I2C2_SDA;
+    } else if (self->i2c_id == I2C_2) {
+        self->i2c_base = I2C2_BASE;
+        self->periph = SYSCTL_PERIPH_I2C2;
+        self->master_regs = (periph_i2c_master_t*)I2C2_BASE;
+        self->slave_regs = (periph_i2c_slave_t*)(I2C2_BASE + 0x800);
+        self->status_control = (periph_i2c_stctl_t*)(I2C2_BASE + 0xFC0);
+        self->irqn = INT_I2C2;
+        pins[0] = MICROPY_HW_I2C2_SCL;
+        // #if defined(MICROPY_HW_I2C2_SDA)
+        pins[1] = MICROPY_HW_I2C2_SDA;
     //     #endif
     // // #endif
     // // #if defined(MICROPY_HW_I2C3_SCL)
-    // } else if (self->i2c_id == I2C_3) {
-    //     self->i2c_base = I2C3_BASE;
-    //     self->periph = SYSCTL_PERIPH_I2C3;
-    //     self->master_regs = (periph_i2c_master_t*)I2C3_BASE;
-    //     self->slave_regs = (periph_i2c_slave_t*)(I2C3_BASE + 0x800);
-    //     self->status_control = (periph_i2c_stctl_t*)(I2C3_BASE + 0xFC0);
-    //     self->irqn = INT_I2C3;
-    //     pins[0] = MICROPY_HW_I2C2_SCL;
-    //     #if defined(MICROPY_HW_I2C3_SDA)
-    //     pins[1] = MICROPY_HW_I2C3_SDA;
+    } else if (self->i2c_id == I2C_3) {
+        self->i2c_base = I2C3_BASE;
+        self->periph = SYSCTL_PERIPH_I2C3;
+        self->master_regs = (periph_i2c_master_t*)I2C3_BASE;
+        self->slave_regs = (periph_i2c_slave_t*)(I2C3_BASE + 0x800);
+        self->status_control = (periph_i2c_stctl_t*)(I2C3_BASE + 0xFC0);
+        self->irqn = INT_I2C3;
+        pins[0] = MICROPY_HW_I2C3_SCL;
+        //#if defined(MICROPY_HW_I2C3_SDA)
+        pins[1] = MICROPY_HW_I2C3_SDA;
     //     #endif
     // #endif
     } else {
@@ -98,8 +98,8 @@ void InitI2C0(machine_hard_i2c_obj_t *self)
     SysCtlPeripheralEnable(self->periph);
 
     // config of Alternative Function for Pins
-    mp_hal_pin_config_alt(pins[0], PIN_FN_I2C, 0);
-    mp_hal_pin_config_alt(pins[1], PIN_FN_I2C, 0);
+    mp_hal_pin_config_alt(pins[0], PIN_FN_I2C, self->i2c_id);
+    mp_hal_pin_config_alt(pins[1], PIN_FN_I2C, self->i2c_id);
  
     // Enable and initialize the I2C0 master module.  Use the system clock for
     // the I2C0 module.  The last parameter sets the I2C data transfer rate.
@@ -116,27 +116,27 @@ void InitI2C0(machine_hard_i2c_obj_t *self)
 void writeI2C0(uint16_t device_address, uint16_t device_register, uint8_t device_data)
 {
    //specify that we want to communicate to device address with an intended write to bus
-   I2CMasterSlaveAddrSet(I2C0_BASE, device_address, false);
+   I2CMasterSlaveAddrSet(I2C1_BASE, device_address, false);
 
    //register to be read
-   I2CMasterDataPut(I2C0_BASE, device_register);
+   I2CMasterDataPut(I2C1_BASE, device_register);
 
    //send control byte and register address byte to slave device
-   I2CMasterControl(I2C0_BASE, I2C_MASTER_CMD_BURST_SEND_START);
+   I2CMasterControl(I2C1_BASE, I2C_MASTER_CMD_BURST_SEND_START);
 
    //wait for MCU to finish transaction
-   while(I2CMasterBusy(I2C0_BASE));
+   while(I2CMasterBusy(I2C1_BASE));
 
-   I2CMasterSlaveAddrSet(I2C0_BASE, device_address, false);
+   I2CMasterSlaveAddrSet(I2C1_BASE, device_address, false);
 
    //specify data to be written to the above mentioned device_register
-   I2CMasterDataPut(I2C0_BASE, device_data);
+   I2CMasterDataPut(I2C1_BASE, device_data);
 
    //wait while checking for MCU to complete the transaction
-   I2CMasterControl(I2C0_BASE, I2C_MASTER_CMD_BURST_RECEIVE_FINISH);
+   I2CMasterControl(I2C1_BASE, I2C_MASTER_CMD_BURST_RECEIVE_FINISH);
 
    //wait for MCU & device to complete transaction
-   while(I2CMasterBusy(I2C0_BASE));
+   while(I2CMasterBusy(I2C1_BASE));
 }
 
 
@@ -157,7 +157,7 @@ void deinitI2C0(const mp_obj_t *self_in) {
 /*
 	Wrapping Function
 */
-mp_obj_t i2c_init_helper(mp_obj_t mode, mp_obj_t port) {
+STATIC mp_obj_t i2c_init_helper() {
 	// enum{ARG_mode, ARG_id};
     // static const mp_arg_t allowed_args[] = {
     //     {MP_QSTR_mode, MP_ARG_REQUIRED | MP_ARG_INT, {.u_int = 0} },    // default: Master
@@ -167,14 +167,14 @@ mp_obj_t i2c_init_helper(mp_obj_t mode, mp_obj_t port) {
     // mp_arg_val_t args[MP_ARRAY_SIZE(allowed_args)];
     // mp_arg_parse_all(n_args, pos_args, kw_args, MP_ARRAY_SIZE(allowed_args), allowed_args, args);
 
-    uint8_t i2c_mode = mp_obj_get_int(mode);
-    uint8_t i2c_port = mp_obj_get_int(port);
+    // uint8_t i2c_mode = mp_obj_get_int(mode);
+    // uint8_t i2c_port = mp_obj_get_int(port);
 
     machine_hard_i2c_obj_t self = {0};
 
 
-    self.i2c_id = i2c_port;
-    self.mode = i2c_mode;
+    self.i2c_id = I2C_1;
+    self.mode = 0;
      
 
     // if(args[ARG_mode].u_int > 2)
@@ -228,14 +228,14 @@ STATIC mp_obj_t i2c_deinit(mp_obj_t self_in) {
     return mp_const_none;
 }
 
-STATIC mp_obj_t i2c_init(mp_obj_t mode, mp_obj_t port) {  
-    return i2c_init_helper(mode, port);
+STATIC mp_obj_t i2c_init() {  
+    return i2c_init_helper();
 }
 
 /*
 	Define uPy-Fuctions
 */
-STATIC MP_DEFINE_CONST_FUN_OBJ_2(i2c_init_obj, i2c_init);
+STATIC MP_DEFINE_CONST_FUN_OBJ_0(i2c_init_obj, i2c_init);
 STATIC MP_DEFINE_CONST_FUN_OBJ_3(i2c_write_obj, i2c_write);
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(i2c_deinit_obj, i2c_deinit);
 
