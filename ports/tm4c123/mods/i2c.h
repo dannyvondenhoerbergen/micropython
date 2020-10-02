@@ -102,8 +102,9 @@ typedef struct _machine_hard_i2c_obj_t {
 
 
 void i2c_init0(void);
+mp_obj_t i2c_init_helper(mp_obj_t mode, mp_obj_t port);
 
-void InitI2C0(const mp_obj_t *self_in);
+void InitI2C0(machine_hard_i2c_obj_t *self_in);
 
 void writeI2C0(uint16_t device_address, uint16_t device_register, uint8_t device_data);
 
