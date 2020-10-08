@@ -24,8 +24,8 @@
  * THE SOFTWARE.
  */
 
-#ifndef MICROPY_INCLUDED_STM32_I2C_H
-#define MICROPY_INCLUDED_STM32_I2C_H
+#ifndef MICROPY_INCLUDED_TM4C_I2C_H
+#define MICROPY_INCLUDED_TM4C_I2C_H
 
 #include <stdint.h>
 #include <stdio.h>
@@ -34,6 +34,13 @@
 #include "inc/hw_i2c.h"
 #include "driverlib/i2c.h"
 #include "mphalport.h"
+
+// defines
+#define I2C_MODE_MASTER 0x00000000
+#define I2C_MODE_SLAVE  0x00000001
+
+// variables
+extern const mp_obj_type_t machine_hard_i2c_type;
 
 // enums
 typedef enum
@@ -88,8 +95,8 @@ typedef struct
 
 // i2c object
 typedef struct _machine_hard_i2c_obj_t {
-    uint16_t mode;
     mp_obj_base_t base;
+    uint16_t mode;
     uint32_t i2c_base;
     uint32_t periph;
     periph_i2c_master_t* master_regs;
@@ -107,4 +114,4 @@ void InitI2C0(machine_hard_i2c_obj_t *self_in);
 
 void writeI2C0(uint16_t device_address, uint16_t device_register, uint8_t device_data);
 
-#endif // MICROPY_INCLUDED_STM32_I2C_H
+#endif // MICROPY_INCLUDED_TM4C_I2C_H

@@ -21,6 +21,41 @@
 void i2c_init0() {}
 
 
+STATIC int i2c_find(mp_obj_t id) {
+    if (MP_OBJ_IS_STR(id)) {
+        // given a string id
+        const char *port = mp_obj_str_get_str(id);
+        if (0) {
+        #ifdef MICROPY_HW_I2C0_NAME
+        } else if (strcmp(port, MICROPY_HW_I2C0_NAME) == 0) {
+            return I2C_0;
+        #endif
+        #ifdef MICROPY_HW_I2C1_NAME
+        } else if (strcmp(port, MICROPY_HW_I2C1_NAME) == 0) {
+            return I2C_1;
+        #endif
+        #ifdef MICROPY_HW_I2C2_NAME
+        } else if (strcmp(port, MICROPY_HW_I2C2_NAME) == 0) {
+            return I2C_2;
+        #endif
+        #ifdef MICROPY_HW_I2C3_NAME
+        } else if (strcmp(port, MICROPY_HW_I2C3_NAME) == 0) {
+            return I2C_3;
+        #endif
+        }
+        nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_ValueError,
+            "I2C(%s) doesn't exist", port));
+    } else {
+        // given an integer id
+        int i2c_id = mp_obj_get_int(id);
+        if (i2c_id >= 0 && i2c_id <= MP_ARRAY_SIZE(MP_STATE_PORT(machine_spi_obj_all))) {
+            return i2c_id;
+        }
+        nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_ValueError,
+            "I2C(%d) doesn't exist", i2c_id));
+    }
+}
+
 
 // INITIALIZATION
 //initialize I2C module 0
@@ -157,47 +192,33 @@ void deinitI2C0(const mp_obj_t *self_in) {
 /*
 	Wrapping Function
 */
-STATIC mp_obj_t i2c_init_helper(uint8_t mode, i2c_id_t id) {
-	// enum{ARG_mode, ARG_id};
-    // static const mp_arg_t allowed_args[] = {
-    //     {MP_QSTR_mode, MP_ARG_REQUIRED | MP_ARG_INT, {.u_int = 0} },    // default: Master
-    //     {MP_QSTR_id, MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = I2C_0} },     // default: I2C0
-    // };
+STATIC mp_obj_t machine_hard_i2c_init_helper(mp_obj_t* self_in, size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+	enum{ARG_mode, ARG_id};
+    static const mp_arg_t allowed_args[] = {
+        {MP_QSTR_mode, MP_ARG_REQUIRED | MP_ARG_INT, {.u_int = I2C_MODE_MASTER} },    // default: Master
+        {MP_QSTR_id, MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = I2C_0} },     // default: I2C0
+    };
 
-    // mp_arg_val_t args[MP_ARRAY_SIZE(allowed_args)];
-    // mp_arg_parse_all(n_args, pos_args, kw_args, MP_ARRAY_SIZE(allowed_args), allowed_args, args);
+    mp_arg_val_t args[MP_ARRAY_SIZE(allowed_args)];
+    mp_arg_parse_all(n_args, pos_args, kw_args, MP_ARRAY_SIZE(allowed_args), allowed_args, args);
 
-    // uint8_t i2c_mode = mp_obj_get_int(mode);
-    // uint8_t i2c_port = mp_obj_get_int(port);
+    machine_hard_i2c_obj_t *self = (machine_hard_i2c_obj_t *)self_in;
 
-    machine_hard_i2c_obj_t self = {0};
-
-
-    self.i2c_id = id;
-    self.mode = mode;
-     
-
-    // if(args[ARG_mode].u_int > 2)
-    // {
-    //     nlr_raise(mp_obj_new_exception_msg(&mp_type_ValueError, "Mode accepts only MASTER or SLAVE"));
-    // }
-    // self->mode = args[0].u_int;
+    // set the I2C mode
+    if(args[ARG_mode].u_int > 2) {
+        nlr_raise(mp_obj_new_exception_msg(&mp_type_ValueError, "Mode accepts only MASTER or SLAVE"));
+    }
+    self->mode = args[ARG_mode].u_int;
     
-
-    // if(args[ARG_id].u_int > 3)
-    // {
-    //     nlr_raise(mp_obj_new_exception_msg(&mp_type_ValueError, "Available I2C-Ports: 0 - 3"));
-    // }
-    // self->i2c_id = args[1].u_int;
+    // set the I2C id value
+    if(args[ARG_id].u_int > 3)
+    {
+        nlr_raise(mp_obj_new_exception_msg(&mp_type_ValueError, "Available I2C-Ports: 0 - 3"));
+    }
+    self->i2c_id = args[1].u_int;
     
-
     // calling I2C-Init function
-    InitI2C0(&self);
-
-    // sending test value
-    // I2CSend(5, 1, 5);
-
-
+    InitI2C0(self);
 
 	return mp_const_none;
 }
@@ -228,19 +249,24 @@ STATIC mp_obj_t i2c_deinit(mp_obj_t self_in) {
     return mp_const_none;
 }
 
-STATIC mp_obj_t i2c_init(mp_obj_t mode, mp_obj_t port) {  
+// STATIC mp_obj_t i2c_init(mp_obj_t mode, mp_obj_t port) {  
 
-    uint8_t i2c_mode = mp_obj_get_int(mode);
-    i2c_id_t id = mp_obj_get_int(port);
-    i2c_init_helper(i2c_mode, id);
+//     uint8_t i2c_mode = mp_obj_get_int(mode);
+//     i2c_id_t id = mp_obj_get_int(port);
+//     i2c_init_helper(i2c_mode, id);
 
-    return mp_const_none;
+//     return mp_const_none;
+// }
+
+STATIC mp_obj_t machine_hard_i2c_init(size_t n_args, const mp_obj_t *args, mp_map_t *kw_args) {  
+    return machine_hard_i2c_init_helper(args[0], n_args - 1, args + 1, kw_args);
 }
+
 
 /*
 	Define uPy-Fuctions
 */
-STATIC MP_DEFINE_CONST_FUN_OBJ_2(i2c_init_obj, i2c_init);
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(machine_i2c_init_obj, 1, machine_hard_i2c_init);
 STATIC MP_DEFINE_CONST_FUN_OBJ_3(i2c_write_obj, i2c_write);
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(i2c_deinit_obj, i2c_deinit);
 
@@ -248,9 +274,9 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(i2c_deinit_obj, i2c_deinit);
 /*
 	Table with all globals
 */
-STATIC const mp_map_elem_t i2c_globals_table[]= {
+STATIC const mp_rom_map_elem_t machine_hard_i2c_locals_dict_table[]= {
 	{ MP_OBJ_NEW_QSTR(MP_QSTR___name__), MP_OBJ_NEW_QSTR(MP_QSTR_i2c) },
-	{ MP_OBJ_NEW_QSTR(MP_QSTR_init), (mp_obj_t)&i2c_init_obj },
+	{ MP_OBJ_NEW_QSTR(MP_QSTR_init), (mp_obj_t)&machine_i2c_init_obj },
 	{ MP_OBJ_NEW_QSTR(MP_QSTR_write), (mp_obj_t)&i2c_write_obj },
     { MP_OBJ_NEW_QSTR(MP_QSTR_deinit), (mp_obj_t)&i2c_deinit_obj },
 };
@@ -259,13 +285,52 @@ STATIC const mp_map_elem_t i2c_globals_table[]= {
 /*
 	Define all globals as uPy-globals
 */
-STATIC MP_DEFINE_CONST_DICT(i2c_globals, i2c_globals_table);
+STATIC MP_DEFINE_CONST_DICT(machine_hard_i2c_locals_dict, machine_hard_i2c_locals_dict_table);
 
 
-/*
-	Define addresses
-*/
-const mp_obj_module_t i2c_module = {
-	.base = { &mp_type_module },
-	.globals = (mp_obj_dict_t*)&i2c_globals,
-}; 
+mp_obj_t machine_hard_i2c_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *all_args) {
+
+    // check arguments
+    mp_arg_check_num(n_args, n_kw, 1, MP_OBJ_FUN_ARGS_MAX, true);
+
+    // find I2C port
+    i2c_id_t i2c_id = i2c_find(all_args[0]);
+
+    // create dynamic peripheral object
+    machine_hard_i2c_obj_t *self;
+
+    // get SPI object
+    if (MP_STATE_PORT(machine_i2c_obj_all)[i2c_id - 1] == NULL) {
+        // create new I2C object
+        self = m_new0(machine_hard_i2c_obj_t, 1);
+        self->base.type = &machine_hard_i2c_type;
+        self->i2c_id = i2c_id;
+        MP_STATE_PORT(machine_i2c_obj_all)[i2c_id - 1] = self;
+    } else {
+        // reference existing I2C object
+        self = MP_STATE_PORT(machine_i2c_obj_all)[i2c_id - 1];
+    }
+
+    if (n_args > 1 || n_kw > 0) {
+        // start the peripheral
+        mp_map_t kw_args;
+        mp_map_init_fixed_table(&kw_args, n_kw, all_args + n_args);
+        mp_obj_t* self_out = (mp_obj_t*) self;
+        machine_hard_i2c_init_helper(self_out, n_args - 1, all_args + 1, &kw_args);
+    }
+
+    return MP_OBJ_FROM_PTR(self);
+
+}
+
+STATIC void machine_hard_i2c_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_t kind) {
+}
+
+const mp_obj_type_t machine_hard_i2c_type = {
+    { &mp_type_type },
+    .name = MP_QSTR_I2C,
+    .print = machine_hard_i2c_print,
+    .make_new = machine_hard_i2c_make_new,
+    .locals_dict = (mp_obj_t)&machine_hard_i2c_locals_dict,
+};
+
