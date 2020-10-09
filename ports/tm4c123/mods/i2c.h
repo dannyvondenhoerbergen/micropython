@@ -96,7 +96,7 @@ typedef struct
 // i2c object
 typedef struct _machine_hard_i2c_obj_t {
     mp_obj_base_t base;
-    uint16_t mode;
+    uint16_t mode :2;
     uint32_t i2c_base;
     uint32_t periph;
     periph_i2c_master_t* master_regs;
@@ -112,6 +112,6 @@ void i2c_init0(void);
 
 void InitI2C0(machine_hard_i2c_obj_t *self_in);
 
-void writeI2C0(uint16_t device_address, uint16_t device_register, uint8_t device_data);
+void i2c_write(mp_obj_t *self_in, uint16_t device_address, uint16_t device_register, uint8_t device_data);
 
 #endif // MICROPY_INCLUDED_TM4C_I2C_H
