@@ -112,8 +112,8 @@ void i2c_init0(void);
 
 void InitI2C0(machine_hard_i2c_obj_t *self_in);
 
-void i2c_master_tx(mp_obj_t *self_in, uint8_t device_address, uint8_t mem_loc, bool mem_loc_flag, uint8_t *device_data, size_t size);
+void i2c_master_tx(mp_obj_t *self_in, uint8_t device_address, bool address_flag, uint8_t mem_loc, bool mem_loc_flag, uint8_t *device_data, size_t size);
 
-void i2c_master_rx(mp_obj_t *self_in, uint8_t device_address, uint8_t mem_loc, bool mem_loc_flag, uint8_t *device_data, size_t size);
+void i2c_master_rx(mp_obj_t *self_in, uint8_t device_address, bool address_flag, uint8_t mem_loc, bool mem_loc_flag, uint8_t *device_data, bool buff_flag, size_t size);
 
 #endif // MICROPY_INCLUDED_TM4C_I2C_H
