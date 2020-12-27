@@ -39,6 +39,12 @@
 #define I2C_MODE_MASTER 0x00000000
 #define I2C_MODE_SLAVE  0x00000001
 
+// Control Register Op Flags
+#define I2C_MASTER_CMD_STOP     0x00000004 // 1: controller generates STOP - 0: conroller does not generate STOP
+#define I2C_MASTER_CMD_START    0x00000002 // 1: controller generates START or REPEADTED START - 0: controller does not generate START
+#define I2C_MASTER_CMD_RUN      0x00000001 // 1: Master enable (starts i2c communication) - 0: Master disable
+#define I2C_MASTER_CMD_ACK      0x00000008 // 1: Master ACK automatically - 0: Master ACK not automatically
+
 // variables
 extern const mp_obj_type_t machine_hard_i2c_type;
 
@@ -114,6 +120,6 @@ void i2c_init0(void);
 
 void InitI2C0(machine_hard_i2c_obj_t *self_in);
 
-void i2c_master_tx(mp_obj_t *self_in, uint8_t device_address, bool address_flag, uint8_t mem_loc, bool mem_loc_flag, uint8_t *device_data, size_t size);
+void i2c_master_tx(mp_obj_t *self_in, uint8_t device_address, bool address_flag, uint16_t mem_loc, bool mem_loc_flag, uint8_t *device_data, size_t size);
 
 #endif // MICROPY_INCLUDED_TM4C_I2C_H
