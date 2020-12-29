@@ -493,8 +493,8 @@ STATIC void i2c_read_bytes_from_bus(mp_obj_t *self_in, uint8_t *buf, size_t len,
     {
         if (i == (len - 1))
         {
-            I2CMasterControl(self->i2c_base, nack ? I2C_MASTER_CMD_RUN : I2C_MASTER_CMD_BURST_RECEIVE_CONT);
-
+            I2CMasterControl(self->i2c_base, nack ? I2C_MASTER_CMD_BURST_RECEIVE_FINISH: I2C_MASTER_CMD_BURST_RECEIVE_CONT);
+            
             // wait for Master Control Unit to finish transaction
             while (I2CMasterBusy(self->i2c_base))
             {
@@ -611,13 +611,13 @@ STATIC void machine_hard_i2c_stop(mp_obj_base_t *self_in)
     i2c_start_stop_condition((mp_obj_t *)self_in, true);
 }
 
-//changed by Danny, vorher uint8_t *buf
+
 STATIC uint8_t machine_hard_i2c_write(mp_obj_base_t *self_in, uint8_t *buf, size_t size)
 {
     uint8_t num_of_ack = 0;
-    uint8_t *plocal_buf = buf; // added by Danny
+    uint8_t *plocal_buf = buf;
 
-    num_of_ack = i2c_write_bytes_to_bus((mp_obj_t *)self_in, plocal_buf, size); // changed by Danny, vorher (self_in, buf, size)
+    num_of_ack = i2c_write_bytes_to_bus((mp_obj_t *)self_in, plocal_buf, size);
 
     return num_of_ack;
 }
@@ -673,7 +673,7 @@ STATIC void machine_hard_i2c_readfrom_into(mp_obj_base_t *self_in, uint8_t dev_a
     // continue reading i2c bus and send nack at the end
     i2c_read_bytes_from_bus((mp_obj_t *)self_in, local_buf, buf_size, 1);
 
-    if (stop)
+    if (1)
     {
         // terminate i2c read with stop
         machine_hard_i2c_stop(self_in);
@@ -701,11 +701,13 @@ STATIC mp_obj_t machine_hard_i2c_readfrom(mp_obj_base_t *self_in, uint8_t dev_ad
     local_buffer = buf;
 
     initialize_i2c_read((mp_obj_t *)self_in, dev_address);
+    machine_hard_i2c_start((mp_obj_base_t *)self_in);
 
     // read bytes from bus into buffer
     i2c_read_bytes_from_bus((mp_obj_t *)self, local_buffer, nbytes, 1);
     
-    if(stop)
+    mp_printf(MP_PYTHON_PRINTER, "finished bytes_from_bus\n");
+    if(1)
     {
         // terminate i2c read with stop
         machine_hard_i2c_stop(self_in);
