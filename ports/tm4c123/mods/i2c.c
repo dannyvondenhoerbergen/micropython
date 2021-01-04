@@ -181,108 +181,98 @@ void InitI2C0(machine_hard_i2c_obj_t *self)
     HWREG(self->i2c_base + I2C_O_FIFOCTL) = 80008000;
 }
 
-
-
 STATIC void i2c_start_stop_condition(mp_obj_t *self_in, bool start_stop)
 {
     machine_hard_i2c_obj_t *self = (machine_hard_i2c_obj_t *)self_in;
-    
+
     // start == false ; stop == true
     (start_stop == false) ? I2CMasterControl(self->i2c_base, I2C_MASTER_CMD_BURST_SEND_START) : I2CMasterControl(self->i2c_base, I2C_MASTER_CMD_BURST_SEND_STOP);
 
-    //mp_printf(MP_PYTHON_PRINTER, "start_stop_condition: %d\n", start_stop);
+    if (start_stop == I2C_SEND_STOP)
+    {
+        self->err_reg = I2CMasterErr(self->i2c_base);
+    }
 }
 
-STATIC uint32_t initialize_i2c_write(mp_obj_t *self_in, uint8_t device_address)
+STATIC void initialize_i2c_write(mp_obj_t *self_in, uint8_t device_address)
 {
     machine_hard_i2c_obj_t *self = (machine_hard_i2c_obj_t *)self_in;
 
     // specify that we want to communicate to device address with an intended write to bus
     // set bitrate to 100 kHz
     I2CMasterSlaveAddrSet(self->i2c_base, device_address, false);
-
-    // make sure no other Master is currently using the BUS
-    // while(I2CMasterBusBusy(self->i2c_base));
-    //mp_printf(MP_PYTHON_PRINTER, "initialize base %d\n", self->i2c_base);
-
-    return (uint32_t)I2CMasterErr(self->i2c_base);
 }
 
-STATIC uint32_t initialize_i2c_read(mp_obj_t *self_in, uint8_t device_address)
+STATIC void initialize_i2c_read(mp_obj_t *self_in, uint8_t device_address)
 {
     machine_hard_i2c_obj_t *self = (machine_hard_i2c_obj_t *)self_in;
 
     // set slave address and initiate read
     I2CMasterSlaveAddrSet(self->i2c_base, device_address, true);
-
-
-
-    return (uint32_t)I2CMasterErr(self->i2c_base);
 }
 
-STATIC uint32_t start_i2c_bus_write(mp_obj_t *self_in, uint8_t first_byte)
-{
-    uint32_t err_code = 0;
-    machine_hard_i2c_obj_t *self = (machine_hard_i2c_obj_t *)self_in;
+// STATIC uint32_t start_i2c_bus_write(mp_obj_t *self_in, uint8_t first_byte)
+// {
+//     uint32_t err_code = 0;
+//     machine_hard_i2c_obj_t *self = (machine_hard_i2c_obj_t *)self_in;
 
-    // mp_printf(MP_PYTHON_PRINTER, "register address send reached\nsize of data buffer: %d\n", size);
-    // memory location to be written to
-    I2CMasterDataPut(self->i2c_base, first_byte);
+//     // mp_printf(MP_PYTHON_PRINTER, "register address send reached\nsize of data buffer: %d\n", size);
+//     // memory location to be written to
+//     I2CMasterDataPut(self->i2c_base, first_byte);
 
-    // send start condition, address byte and bit for write direction to slave device
-    I2CMasterControl(self->i2c_base, I2C_MASTER_CMD_BURST_SEND_START);
+//     // send start condition, address byte and bit for write direction to slave device
+//     I2CMasterControl(self->i2c_base, I2C_MASTER_CMD_BURST_SEND_START);
 
-    // wait for Master Control Unit to finish transaction
-    while (I2CMasterBusy(self->i2c_base))
-    {
-    }
+//     // wait for Master Control Unit to finish transaction
+//     while (I2CMasterBusy(self->i2c_base))
+//     {
+//     }
 
-    // check for errors
-    err_code = I2CMasterErr(self->i2c_base);
-    if (err_code != I2C_MASTER_ERR_NONE)
-    {
-        // if error occured, cancel write routine
-        I2CMasterControl(self->i2c_base, I2C_MASTER_CMD_BURST_SEND_ERROR_STOP);
-        return err_code;
-    }
+//     // check for errors
+//     err_code = I2CMasterErr(self->i2c_base);
+//     if (err_code != I2C_MASTER_ERR_NONE)
+//     {
+//         // if error occured, cancel write routine
+//         I2CMasterControl(self->i2c_base, I2C_MASTER_CMD_BURST_SEND_ERROR_STOP);
+//         return err_code;
+//     }
 
-    mp_printf(MP_PYTHON_PRINTER, "continuos base %d\n", self->i2c_base);
-    // return error code
-    return err_code;
-}
+//     mp_printf(MP_PYTHON_PRINTER, "continuos base %d\n", self->i2c_base);
+//     // return error code
+//     return err_code;
+// }
 
-STATIC uint32_t i2c_single_write(mp_obj_t *self_in, uint8_t i2c_data)
-{
-    uint32_t err_code = 0;
-    machine_hard_i2c_obj_t *self = (machine_hard_i2c_obj_t *)self_in;
+// STATIC uint32_t i2c_single_write(mp_obj_t *self_in, uint8_t i2c_data)
+// {
+//     uint32_t err_code = 0;
+//     machine_hard_i2c_obj_t *self = (machine_hard_i2c_obj_t *)self_in;
 
-    // memory location to be written to
-    I2CMasterDataPut(self->i2c_base, i2c_data);
+//     // memory location to be written to
+//     I2CMasterDataPut(self->i2c_base, i2c_data);
 
-    // send start condition, address byte and bit for write direction to slave device
-    I2CMasterControl(self->i2c_base, I2C_MASTER_CMD_SINGLE_SEND);
+//     // send start condition, address byte and bit for write direction to slave device
+//     I2CMasterControl(self->i2c_base, I2C_MASTER_CMD_SINGLE_SEND);
 
-    // wait for Master Control Unit to finish transaction
-    while (I2CMasterBusy(self->i2c_base))
-    {
-    }
+//     // wait for Master Control Unit to finish transaction
+//     while (I2CMasterBusy(self->i2c_base))
+//     {
+//     }
 
-    // check for errors
-    err_code = I2CMasterErr(self->i2c_base);
-    if (err_code != I2C_MASTER_ERR_NONE)
-    {
-        // if error occured, cancel write routine
-        I2CMasterControl(self->i2c_base, I2C_MASTER_CMD_BURST_SEND_ERROR_STOP);
-        return err_code;
-    }
+//     // check for errors
+//     err_code = I2CMasterErr(self->i2c_base);
+//     if (err_code != I2C_MASTER_ERR_NONE)
+//     {
+//         // if error occured, cancel write routine
+//         I2CMasterControl(self->i2c_base, I2C_MASTER_CMD_BURST_SEND_ERROR_STOP);
+//         return err_code;
+//     }
 
-    // return error code
-    return err_code;
-}
+//     // return error code
+//     return err_code;
+// }
 // changed by Danny, vorher (mp_obj_t * self_in, uint8_t *i2c_data, size_t size)
 STATIC uint8_t i2c_write_bytes_to_bus(mp_obj_t *self_in, uint8_t *i2c_data, size_t size)
 {
-    uint32_t err_code = 0;
     uint8_t num_of_ack = 0;
     machine_hard_i2c_obj_t *self = (machine_hard_i2c_obj_t *)self_in;
     uint8_t *local_buf;
@@ -290,8 +280,6 @@ STATIC uint8_t i2c_write_bytes_to_bus(mp_obj_t *self_in, uint8_t *i2c_data, size
 
     for (size_t i = 0; i < size; i++)
     {
-        num_of_ack++;
-
         // write data to FIFO
         I2CMasterDataPut(self->i2c_base, *(local_buf++));
 
@@ -304,9 +292,7 @@ STATIC uint8_t i2c_write_bytes_to_bus(mp_obj_t *self_in, uint8_t *i2c_data, size
         }
 
         // check for errors
-        err_code = I2CMasterErr(self->i2c_base);
-
-        if (err_code != I2C_MASTER_ERR_NONE)
+        if (I2CMasterErr(self->i2c_base) != I2C_MASTER_ERR_NONE)
         {
             // if error occured, cancel write routine
             I2CMasterControl(self->i2c_base, I2C_MASTER_CMD_BURST_SEND_ERROR_STOP);
@@ -314,107 +300,108 @@ STATIC uint8_t i2c_write_bytes_to_bus(mp_obj_t *self_in, uint8_t *i2c_data, size
             // return error code
             return num_of_ack;
         }
+        num_of_ack++;
     }
     //mp_printf(MP_PYTHON_PRINTER, "bytes_to_bus base %d\n", self->i2c_base);
     return num_of_ack;
 }
 
-STATIC uint32_t terminate_i2c_bus_write(mp_obj_t *self_in, uint8_t last_byte)
-{
-    uint32_t err_code;
-    machine_hard_i2c_obj_t *self = (machine_hard_i2c_obj_t *)self_in;
+// STATIC uint32_t terminate_i2c_bus_write(mp_obj_t *self_in, uint8_t last_byte)
+// {
+//     uint32_t err_code;
+//     machine_hard_i2c_obj_t *self = (machine_hard_i2c_obj_t *)self_in;
 
-    // mp_printf(MP_PYTHON_PRINTER, "register address send reached\nsize of data buffer: %d\n", size);
-    // memory location to be written to
-    I2CMasterDataPut(self->i2c_base, last_byte);
+//     // mp_printf(MP_PYTHON_PRINTER, "register address send reached\nsize of data buffer: %d\n", size);
+//     // memory location to be written to
+//     I2CMasterDataPut(self->i2c_base, last_byte);
 
-    // send start condition, address byte and bit for write direction to slave device
-    I2CMasterControl(self->i2c_base, I2C_MASTER_CMD_BURST_SEND_STOP);
+//     // send start condition, address byte and bit for write direction to slave device
+//     I2CMasterControl(self->i2c_base, I2C_MASTER_CMD_BURST_SEND_STOP);
 
-    // wait for Master Control Unit to finish transaction
-    while (I2CMasterBusy(self->i2c_base))
-    {
-    }
+//     // wait for Master Control Unit to finish transaction
+//     while (I2CMasterBusy(self->i2c_base))
+//     {
+//     }
 
-    // check for errors
-    err_code = I2CMasterErr(self->i2c_base);
-    if (err_code != I2C_MASTER_ERR_NONE)
-    {
-        // if error occured, cancel write routine
-        I2CMasterControl(self->i2c_base, I2C_MASTER_CMD_BURST_SEND_ERROR_STOP);
-        return err_code;
-    }
-    mp_printf(MP_PYTHON_PRINTER, "terminate base %d\n", self->i2c_base);
-    // return error code
-    return err_code;
-}
+//     // check for errors
+//     err_code = I2CMasterErr(self->i2c_base);
+//     if (err_code != I2C_MASTER_ERR_NONE)
+//     {
+//         // if error occured, cancel write routine
+//         I2CMasterControl(self->i2c_base, I2C_MASTER_CMD_BURST_SEND_ERROR_STOP);
+//         return err_code;
+//     }
+//     mp_printf(MP_PYTHON_PRINTER, "terminate base %d\n", self->i2c_base);
+//     // return error code
+//     return err_code;
+// }
 
 //sends data and, if requested, a memory location (register) via I2C
-void i2c_master_tx(mp_obj_t *self_in, uint8_t device_address, bool address_flag, uint16_t mem_loc, bool mem_loc_flag, uint8_t *device_data, size_t size)
-{
-    uint32_t err_code;
-    uint8_t local_memloc_buf[2] = {0};
-    uint8_t *local_data_buf;
-    uint8_t i = 0;
+// void i2c_master_tx(mp_obj_t *self_in, uint8_t device_address, bool address_flag, uint16_t mem_loc, bool mem_loc_flag, uint8_t *device_data, size_t size)
+// {
+//     uint32_t err_code;
+//     uint8_t local_memloc_buf[2] = {0};
+//     uint8_t *local_data_buf;
+//     uint8_t i = 0;
 
-    local_data_buf = device_data;
+//     local_data_buf = device_data;
 
-    // if BUS is free and no errors occured, proceed
-    if (initialize_i2c_write(self_in, device_address) == I2C_MASTER_ERR_NONE)
-    {
-        // single send routine
-        if (size == 1)
-        {
-            if (i2c_single_write(self_in, *local_data_buf) != I2C_MASTER_ERR_NONE)
-            {
-                // if error occured, abort
-                return;
-            }
-        }
-        else
-        {
-            if (mem_loc_flag)
-            {
-                // memory location LSByte second
-                local_memloc_buf[1] = (uint8_t)(mem_loc & 0xFF);
+//     // if BUS is free and no errors occured, proceed
+//     if (initialize_i2c_write(self_in, device_address) == I2C_MASTER_ERR_NONE)
+//     {
+//         // single send routine
+//         if (size == 1)
+//         {
+//             if (i2c_single_write(self_in, *local_data_buf) != I2C_MASTER_ERR_NONE)
+//             {
+//                 // if error occured, abort
+//                 return;
+//             }
+//         }
+//         else
+//         {
+//             if (mem_loc_flag)
+//             {
+//                 // memory location LSByte second
+//                 local_memloc_buf[1] = (uint8_t)(mem_loc & 0xFF);
 
-                // memory location MSByte first
-                local_memloc_buf[0] = (uint8_t)((mem_loc >> 8) & 0xFF);
+//                 // memory location MSByte first
+//                 local_memloc_buf[0] = (uint8_t)((mem_loc >> 8) & 0xFF);
 
-                err_code = start_i2c_bus_write(self_in, local_memloc_buf[0]);
-                err_code = i2c_write_bytes_to_bus(self_in, &local_memloc_buf[1], sizeof(uint8_t));
+//                 err_code = start_i2c_bus_write(self_in, local_memloc_buf[0]);
+//                 err_code = i2c_write_bytes_to_bus(self_in, &local_memloc_buf[1], sizeof(uint8_t));
 
-                if (err_code != I2C_MASTER_ERR_NONE)
-                {
-                    // if error occured, abort
-                    return;
-                }
-            }
-            else
-            {
+//                 if (err_code != I2C_MASTER_ERR_NONE)
+//                 {
+//                     // if error occured, abort
+//                     return;
+//                 }
+//             }
+//             else
+//             {
 
-                err_code = start_i2c_bus_write(self_in, *(local_data_buf++));
-                i++;
+//                 err_code = start_i2c_bus_write(self_in, *(local_data_buf++));
+//                 i++;
 
-                if (err_code != I2C_MASTER_ERR_NONE)
-                {
-                    // if error occured, abort
-                    return;
-                }
-            }
+//                 if (err_code != I2C_MASTER_ERR_NONE)
+//                 {
+//                     // if error occured, abort
+//                     return;
+//                 }
+//             }
 
-            // send payload
-            err_code = i2c_write_bytes_to_bus(self_in, local_data_buf, (size - 1) - i);
-            err_code = terminate_i2c_bus_write(self_in, *(local_data_buf + (size - 1) - i));
+//             // send payload
+//             err_code = i2c_write_bytes_to_bus(self_in, local_data_buf, (size - 1) - i);
+//             err_code = terminate_i2c_bus_write(self_in, *(local_data_buf + (size - 1) - i));
 
-            if (err_code != I2C_MASTER_ERR_NONE)
-            {
-                // if error occured, abort
-                return;
-            }
-        }
-    }
-}
+//             if (err_code != I2C_MASTER_ERR_NONE)
+//             {
+//                 // if error occured, abort
+//                 return;
+//             }
+//         }
+//     }
+// }
 
 // ends i2c receive burst and returns last byte or error code
 // STATIC uint8_t terminate_i2c_bus_read(mp_obj_t *self_in)
@@ -480,7 +467,7 @@ void i2c_master_tx(mp_obj_t *self_in, uint8_t device_address, bool address_flag,
 // }
 
 // reads number of bytes (len) from bus to address buf
-STATIC void i2c_read_bytes_from_bus(mp_obj_t *self_in, uint8_t *buf, size_t len, uint8_t nack)
+STATIC void i2c_read_bytes_from_bus(mp_obj_t *self_in, uint8_t *buf, size_t len, uint8_t terminate)
 {
     uint8_t *buf_local;
     machine_hard_i2c_obj_t *self = (machine_hard_i2c_obj_t *)self_in;
@@ -488,13 +475,13 @@ STATIC void i2c_read_bytes_from_bus(mp_obj_t *self_in, uint8_t *buf, size_t len,
     // initialize buffer root pointer
     buf_local = buf;
 
-    // send payload
+    // read bytes from bus
     for (size_t i = 0; i < len; i++)
     {
-        if (i == (len - 1))
+        if((i == (len - 1)) && (terminate == 1))
         {
-            I2CMasterControl(self->i2c_base, nack ? I2C_MASTER_CMD_BURST_RECEIVE_FINISH: I2C_MASTER_CMD_BURST_RECEIVE_CONT);
-            
+            I2CMasterControl(self->i2c_base, I2C_MASTER_CMD_BURST_RECEIVE_FINISH);
+
             // wait for Master Control Unit to finish transaction
             while (I2CMasterBusy(self->i2c_base))
             {
@@ -510,12 +497,14 @@ STATIC void i2c_read_bytes_from_bus(mp_obj_t *self_in, uint8_t *buf, size_t len,
                 nlr_raise(mp_obj_new_exception_msg(&mp_type_ValueError, "data read failed\n"));
             }
 
+            *buf_local = (uint8_t)I2CMasterDataGet(self->i2c_base);
+
             return;
         }
         // mp_printf(MP_PYTHON_PRINTER, "rest of buffer read reached\nsize of data buffer: %d\n", len);
 
         // send data to the slave
-        I2CMasterControl(self->i2c_base, I2C_MASTER_CMD_BURST_RECEIVE_CONT);
+        I2CMasterControl(self->i2c_base, (i == 0) ? I2C_MASTER_CMD_BURST_RECEIVE_START : I2C_MASTER_CMD_BURST_RECEIVE_CONT);
 
         // wait for Master Control Unit to finish transaction
         while (I2CMasterBusy(self->i2c_base))
@@ -550,7 +539,6 @@ void deinitI2C0(const mp_obj_t *self_in)
 STATIC void machine_hard_i2c_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_t kind)
 {
     machine_hard_i2c_obj_t *i2c = (machine_hard_i2c_obj_t *)self_in;
-    
 
     mp_printf(print, "I2C(%u, scl=%q, sda=%q", i2c->i2c_id, i2c->pin_SCL->name, i2c->pin_SDA->name);
 
@@ -611,32 +599,53 @@ STATIC void machine_hard_i2c_stop(mp_obj_base_t *self_in)
     i2c_start_stop_condition((mp_obj_t *)self_in, true);
 }
 
-
 STATIC uint8_t machine_hard_i2c_write(mp_obj_base_t *self_in, uint8_t *buf, size_t size)
 {
     uint8_t num_of_ack = 0;
     uint8_t *plocal_buf = buf;
+    machine_hard_i2c_obj_t *self = (machine_hard_i2c_obj_t *)self_in;
 
-    num_of_ack = i2c_write_bytes_to_bus((mp_obj_t *)self_in, plocal_buf, size);
+    initialize_i2c_write((mp_obj_t *)self_in, *(plocal_buf++));
+    machine_hard_i2c_start(self_in);
 
-    return num_of_ack;
+    num_of_ack = i2c_write_bytes_to_bus((mp_obj_t *)self_in, plocal_buf, size - 1);
+
+    machine_hard_i2c_stop(self_in);
+
+    if (self->err_reg == I2C_MASTER_ERR_NONE)
+    {
+        return (num_of_ack + 1);
+    }
+    else
+    {
+        ((self->err_reg & I2C_MASTER_ERR_ADDR_ACK) == I2C_MASTER_ERR_ADDR_ACK) ? nlr_raise(mp_obj_new_exception_msg(&mp_type_ValueError, "Device address not found on bus")) : nlr_raise(mp_obj_new_exception_msg(&mp_type_ValueError, "No Data ACK"));
+    }
 }
 
 STATIC uint8_t machine_hard_i2c_writeto(mp_obj_base_t *self_in, uint8_t dev_addr, size_t size, uint8_t *buf, uint8_t stop)
 {
     uint8_t num_of_ack = 0;
     uint8_t *plocal_buf = buf;
+    machine_hard_i2c_obj_t *self = (machine_hard_i2c_obj_t *)self_in;
 
     initialize_i2c_write((mp_obj_t *)self_in, dev_addr);
     machine_hard_i2c_start(self_in);
+
     num_of_ack = i2c_write_bytes_to_bus((mp_obj_t *)self_in, plocal_buf, size);
 
-    if(stop)
+    if (stop)
     {
         machine_hard_i2c_stop(self_in);
     }
 
-    return num_of_ack;
+    if (self->err_reg == I2C_MASTER_ERR_NONE)
+    {
+        return (num_of_ack + 1);
+    }
+    else
+    {
+        ((self->err_reg & I2C_MASTER_ERR_ADDR_ACK) == I2C_MASTER_ERR_ADDR_ACK) ? nlr_raise(mp_obj_new_exception_msg(&mp_type_ValueError, "Device address not found on bus")) : nlr_raise(mp_obj_new_exception_msg(&mp_type_ValueError, "No Data ACK"));
+    }
 }
 
 STATIC uint8_t machine_hard_i2c_writeto_mem(mp_obj_base_t *self_in, uint8_t dev_addr, uint8_t mem_addr, size_t size, uint8_t *buf)
@@ -650,10 +659,7 @@ STATIC uint8_t machine_hard_i2c_writeto_mem(mp_obj_base_t *self_in, uint8_t dev_
     num_of_ack = i2c_write_bytes_to_bus((mp_obj_t *)self_in, pmem_addr, size);
     num_of_ack += i2c_write_bytes_to_bus((mp_obj_t *)self_in, plocal_buf, size);
 
-    if(1)
-    {
-        machine_hard_i2c_stop(self_in);
-    }
+    machine_hard_i2c_stop(self_in);
 
     return num_of_ack;
 }
@@ -663,22 +669,42 @@ STATIC void machine_hard_i2c_readinto(mp_obj_base_t *self_in, uint8_t *buf, uint
     uint8_t *plocal_buf = buf;
 
     // read bytes from bus into given buffer
-    i2c_read_bytes_from_bus((mp_obj_t *)self_in, plocal_buf, buf_size, nack);
+    i2c_read_bytes_from_bus((mp_obj_t *)self_in, plocal_buf, buf_size,1);
 }
 
-STATIC void machine_hard_i2c_readfrom_into(mp_obj_base_t *self_in, uint8_t dev_address, uint8_t *buf, uint8_t buf_size, uint8_t stop)
+STATIC void machine_hard_i2c_mem_read(mp_obj_base_t *self_in, uint8_t *buf, uint8_t dev_address, uint16_t mem_address, uint8_t buf_size, uint8_t addr_size)
 {
     uint8_t *local_buf = buf;
+    uint8_t mem_loc_local8bit = 0x00;
+    uint16_t mem_loc_local16bit = 0x0000;
+    uint8_t *pmem_loc = (uint8_t *)&mem_loc_local16bit;
 
-    // continue reading i2c bus and send nack at the end
-    i2c_read_bytes_from_bus((mp_obj_t *)self_in, local_buf, buf_size, 1);
-
-    if (1)
+    // check for address size
+    if(addr_size == 8)
     {
-        // terminate i2c read with stop
-        machine_hard_i2c_stop(self_in);
+        mem_loc_local8bit = (uint8_t)(mem_address & 0x00FF);
+    }
+    else
+    {
+        // send MSB first
+        *(pmem_loc+1) = (uint8_t)(mem_address & 0x00FF);
+        *pmem_loc = (uint8_t)((mem_address >> 8) & 0x00FF);
     }
     
+    // set msa reg and direction bit
+    initialize_i2c_write((mp_obj_t *)self_in, dev_address);
+
+    // start transfer
+    machine_hard_i2c_start(self_in);
+
+    // send mem location to either 8 or 16 bit mem location
+    (addr_size == 8) ? i2c_write_bytes_to_bus((mp_obj_t *)self_in, &mem_loc_local8bit, 1) : i2c_write_bytes_to_bus((mp_obj_t *)self_in, (uint8_t *)&mem_loc_local16bit, 2) ;
+    
+    // repeated start for receive
+    initialize_i2c_read((mp_obj_t *)self_in, dev_address);
+
+    // read from bus
+    i2c_read_bytes_from_bus((mp_obj_t *)self_in, local_buf, buf_size,1);
 }
 
 STATIC mp_obj_t machine_hard_i2c_readfrom_mem(mp_obj_base_t *self_in, uint8_t dev_address, uint16_t memaddr, size_t size)
@@ -704,10 +730,10 @@ STATIC mp_obj_t machine_hard_i2c_readfrom(mp_obj_base_t *self_in, uint8_t dev_ad
     machine_hard_i2c_start((mp_obj_base_t *)self_in);
 
     // read bytes from bus into buffer
-    i2c_read_bytes_from_bus((mp_obj_t *)self, local_buffer, nbytes, 1);
-    
+    i2c_read_bytes_from_bus((mp_obj_t *)self, local_buffer, nbytes,1);
+
     mp_printf(MP_PYTHON_PRINTER, "finished bytes_from_bus\n");
-    if(1)
+    if (1)
     {
         // terminate i2c read with stop
         machine_hard_i2c_stop(self_in);
@@ -717,22 +743,27 @@ STATIC mp_obj_t machine_hard_i2c_readfrom(mp_obj_base_t *self_in, uint8_t dev_ad
 
 STATIC mp_obj_t machine_hard_i2c_scan(mp_obj_base_t *self_in)
 {
-    //pyb_i2c_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    
-
-    // if (!in_master_mode(self)) {
-    //     mp_raise_TypeError("I2C must be a master");
-    // }
-    uint8_t buf = 1;
-    uint8_t *plocal_buf = &buf;
+    machine_hard_i2c_obj_t *self = (machine_hard_i2c_obj_t *)self_in;
 
     mp_obj_t list = mp_obj_new_list(0, NULL);
 
-    for (uint addr = 0x08; addr <= 0x77; addr++) {
-        //HAL_StatusTypeDef status = HAL_I2C_IsDeviceReady(self->i2c, addr << 1, 1, 200);
-        
-        uint8_t status = machine_hard_i2c_writeto(self_in, addr, 1, plocal_buf, 1);
-        if (status >= 1) {
+    I2CMasterDataPut(self->i2c_base, 0);
+
+    for (uint addr = 0x08; addr <= 0x77; addr++)
+    {
+        initialize_i2c_write((mp_obj_t *)self_in, addr);
+        // send start condition, address byte and bit for write direction to slave device
+        I2CMasterControl(self->i2c_base, I2C_MASTER_CMD_SINGLE_SEND);
+
+        // wait for Master Control Unit to finish transaction
+        while (I2CMasterBusy(self->i2c_base))
+        {
+        }
+
+        // check for errors
+        if (I2CMasterErr(self->i2c_base) == I2C_MASTER_ERR_NONE)
+        {
+            // if error occured, cancel write routine
             mp_obj_list_append(list, MP_OBJ_NEW_SMALL_INT(addr));
         }
     }
@@ -740,19 +771,53 @@ STATIC mp_obj_t machine_hard_i2c_scan(mp_obj_base_t *self_in)
     return list;
 }
 
+STATIC bool machine_hard_i2c_is_ready(mp_obj_base_t *self_in, uint8_t dev_addr)
+{
+    machine_hard_i2c_obj_t *self = (machine_hard_i2c_obj_t *)self_in;
+
+    I2CMasterDataPut(self->i2c_base, 0);
+
+    initialize_i2c_write((mp_obj_t *)self_in, dev_addr);
+    // send start condition, address byte and bit for write direction to slave device
+    I2CMasterControl(self->i2c_base, I2C_MASTER_CMD_SINGLE_SEND);
+
+    // wait for Master Control Unit to finish transaction
+    while (I2CMasterBusy(self->i2c_base))
+    {
+    }
+
+    // check for errors
+    if (I2CMasterErr(self->i2c_base) == I2C_MASTER_ERR_NONE)
+    {
+        // if error occured, cancel write routine
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+
 /* MP WRAPPING FUNCTIONS*/
 
-STATIC mp_obj_t mp_machine_i2c_stop(mp_obj_t self)
+STATIC mp_obj_t mp_machine_i2c_is_ready(mp_obj_t self, mp_obj_t dev_addr)
 {
-    machine_hard_i2c_stop((mp_obj_base_t *)self);
-
-    return mp_const_none;
+    uint8_t addr = mp_obj_get_int(dev_addr);
+    if(machine_hard_i2c_is_ready((mp_obj_base_t *)self, addr) == true)
+    {
+        return mp_const_true;
+    }
+    else
+    {
+        return mp_const_false;
+    }
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_machine_i2c_stop_obj, mp_machine_i2c_stop);
+STATIC MP_DEFINE_CONST_FUN_OBJ_2(mp_machine_i2c_is_ready_obj, mp_machine_i2c_is_ready);
 
 STATIC mp_obj_t mp_machine_i2c_start(mp_obj_t self)
 {
-    
+
     machine_hard_i2c_start((mp_obj_base_t *)self);
 
     return mp_const_none;
@@ -790,8 +855,8 @@ STATIC mp_obj_t mp_machine_hard_i2c_readfrom(size_t n_args, const mp_obj_t *args
 {
 
     // casting Micropython data types to c data types
-    uint8_t int_dev_address = mp_obj_get_int(args[1]);
-    uint8_t int_nbytes = mp_obj_get_int(args[2]);
+    uint8_t int_nbytes = mp_obj_get_int(args[1]);
+    uint8_t int_dev_address = mp_obj_get_int(args[2]);
     uint8_t int_stop = mp_obj_get_int(args[3]);
 
     vstr_t vstr;
@@ -803,30 +868,35 @@ STATIC mp_obj_t mp_machine_hard_i2c_readfrom(size_t n_args, const mp_obj_t *args
     // return vstr buffer
     return mp_obj_new_str_from_vstr(&mp_type_bytes, &vstr);
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mp_machine_hard_i2c_readfrom_obj, 4, 4, mp_machine_hard_i2c_readfrom);
+STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mp_machine_hard_i2c_recv_obj, 4, 4, mp_machine_hard_i2c_recv);
 
-STATIC mp_obj_t mp_machine_hard_i2c_readfrom_into(size_t n_args, const mp_obj_t *args)
+STATIC mp_obj_t mp_machine_hard_i2c_mem_read(size_t n_args, const mp_obj_t *args)
 {
     // casting Micropython data types to c data types
-    // get device address
-    uint8_t int_dev_address = mp_obj_get_int(args[1]);
-    // mp_printf(MP_PYTHON_PRINTER, "device address: %d\n", int_dev_address);
 
     // get buffer to read to
     mp_buffer_info_t i2c_data;
-    mp_get_buffer_raise(args[2], &i2c_data, MP_BUFFER_READ);
-    // mp_printf(MP_PYTHON_PRINTER, "1. byte of buffer: %d\n", *(uint8_t *)i2c_data.buf);
+    mp_get_buffer_raise(args[1], &i2c_data, MP_BUFFER_READ);
+
+    // get device address
+    uint8_t int_dev_address = mp_obj_get_int(args[2]);
 
     // get stop
-    uint8_t int_stop = mp_obj_get_int(args[3]);
+    uint16_t int_mem_addr = mp_obj_get_int(args[3]);
+
+    uint8_t addr_size = mp_obj_get_int(args[4]);
+
+    if(!((addr_size == 16) || (addr_size == 8)))
+    {
+        nlr_raise(mp_obj_new_exception_msg(&mp_type_ValueError, "addr_size can only be 8 or 16 bits"));
+    }
 
     // pass to c-interface function
-    machine_hard_i2c_readfrom_into(args[0], int_dev_address, i2c_data.buf, i2c_data.len, int_stop);
+    machine_hard_i2c_mem_read(args[0], i2c_data.buf, int_dev_address, int_mem_addr, i2c_data.len, addr_size);
 
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mp_machine_hard_i2c_readfrom_into_obj, 4, 4, mp_machine_hard_i2c_readfrom_into);
-
+STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mp_machine_hard_i2c_mem_read_obj, 4, 5, mp_machine_hard_i2c_mem_read);
 
 STATIC mp_obj_t mp_machine_hard_i2c_writeto(size_t n_args, const mp_obj_t *args)
 {
@@ -886,7 +956,7 @@ STATIC mp_obj_t mp_machine_hard_i2c_writeto_mem(size_t n_args, const mp_obj_t *a
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mp_machine_hard_i2c_writeto_mem_obj, 4, 4, mp_machine_hard_i2c_writeto_mem);
 
-/* Scan Function */ 
+/* Scan Function */
 
 STATIC mp_obj_t mp_machine_hard_i2c_scan(mp_obj_t self)
 {
@@ -923,12 +993,12 @@ STATIC const mp_rom_map_elem_t machine_hard_i2c_locals_dict_table[] = {
     // methods
     {MP_OBJ_NEW_QSTR(MP_QSTR___name__), MP_OBJ_NEW_QSTR(MP_QSTR_i2c)},
     {MP_OBJ_NEW_QSTR(MP_QSTR_init), MP_ROM_PTR(&machine_i2c_init_obj)},
-    {MP_OBJ_NEW_QSTR(MP_QSTR_stop), MP_ROM_PTR(&mp_machine_i2c_stop_obj)},
+    {MP_OBJ_NEW_QSTR(MP_QSTR_is_ready), MP_ROM_PTR(&mp_machine_i2c_is_ready_obj)},
     {MP_OBJ_NEW_QSTR(MP_QSTR_start), MP_ROM_PTR(&mp_machine_i2c_start_obj)},
     {MP_OBJ_NEW_QSTR(MP_QSTR_readinto), MP_ROM_PTR(&mp_machine_hard_i2c_readinto_obj)},
     {MP_OBJ_NEW_QSTR(MP_QSTR_write), MP_ROM_PTR(&mp_machine_hard_i2c_write_obj)},
     {MP_OBJ_NEW_QSTR(MP_QSTR_readfrom), MP_ROM_PTR(&mp_machine_hard_i2c_readfrom_obj)},
-    {MP_OBJ_NEW_QSTR(MP_QSTR_readfrom_into), MP_ROM_PTR(&mp_machine_hard_i2c_readfrom_into_obj)},
+    {MP_OBJ_NEW_QSTR(MP_QSTR_mem_read), MP_ROM_PTR(&mp_machine_hard_i2c_mem_read_obj)},
     {MP_OBJ_NEW_QSTR(MP_QSTR_writeto), MP_ROM_PTR(&mp_machine_hard_i2c_writeto_obj)},
     {MP_OBJ_NEW_QSTR(MP_QSTR_writeto_mem), MP_ROM_PTR(&mp_machine_hard_i2c_writeto_mem_obj)},
     {MP_OBJ_NEW_QSTR(MP_QSTR_readfrom_mem), MP_ROM_PTR(&mp_machine_hard_i2c_readfrom_mem_obj)},

@@ -39,6 +39,9 @@
 #define I2C_MODE_MASTER 0x00000000
 #define I2C_MODE_SLAVE  0x00000001
 
+#define I2C_SEND_START  false
+#define I2C_SEND_STOP   true
+
 // Control Register Op Flags
 #define I2C_MASTER_CMD_STOP     0x00000004 // 1: controller generates STOP - 0: conroller does not generate STOP
 #define I2C_MASTER_CMD_START    0x00000002 // 1: controller generates START or REPEADTED START - 0: controller does not generate START
@@ -113,6 +116,8 @@ typedef struct _machine_hard_i2c_obj_t {
     uint32_t irqn;
     i2c_id_t i2c_id : 3;
     bool is_enabled : 1;
+    uint8_t num_of_acks;
+    uint32_t err_reg;
 } machine_hard_i2c_obj_t;
 
 
