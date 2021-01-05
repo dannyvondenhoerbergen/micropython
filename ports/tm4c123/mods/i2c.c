@@ -669,7 +669,7 @@ STATIC uint8_t machine_hard_i2c_mem_write(mp_obj_base_t *self_in, uint8_t dev_ad
     machine_hard_i2c_start(self_in);
 
     if (size_mem_addr == 8)
-    {    
+    {
         num_of_ack = i2c_write_bytes_to_bus((mp_obj_t *)self_in, &mem_loc_local8bit, 1);
     }
     else
@@ -678,7 +678,6 @@ STATIC uint8_t machine_hard_i2c_mem_write(mp_obj_base_t *self_in, uint8_t dev_ad
     }
 
     num_of_ack += i2c_write_bytes_to_bus((mp_obj_t *)self_in, plocal_buf, size);
-    
 
     machine_hard_i2c_stop(self_in);
 
@@ -693,12 +692,15 @@ STATIC void machine_hard_i2c_readinto(mp_obj_base_t *self_in, uint8_t *buf, uint
     i2c_read_bytes_from_bus((mp_obj_t *)self_in, plocal_buf, buf_size, 1);
 }
 
-STATIC void machine_hard_i2c_mem_read(mp_obj_base_t *self_in, uint8_t *buf, uint8_t dev_address, uint16_t mem_address, uint8_t buf_size, uint8_t addr_size)
+STATIC void machine_hard_i2c_mem_read(mp_obj_base_t *self_in, uint8_t *buf, uint8_t dev_address, uint16_t mem_address, uint8_t buf_size, uint8_t addr_size, uint32_t timeout)
 {
     uint8_t *local_buf = buf;
     uint8_t mem_loc_local8bit = 0x00;
     uint16_t mem_loc_local16bit = 0x0000;
     uint8_t *pmem_loc = (uint8_t *)&mem_loc_local16bit;
+    machine_hard_i2c_obj_t *self = (machine_hard_i2c_obj_t *)self_in;
+
+    I2CMasterTimeoutSet(self->i2c_base, timeout);
 
     // check for address size
     if (addr_size == 8)
@@ -878,6 +880,8 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_3(mp_machine_hard_i2c_recv_obj, mp_machine_hard_i
 
 STATIC mp_obj_t mp_machine_hard_i2c_mem_read(size_t n_args, const mp_obj_t *args)
 {
+    uint8_t addr_size = 8;
+    uint32_t timeout = 0x7A12;
     // casting Micropython data types to c data types
 
     // get buffer to read to
@@ -890,19 +894,28 @@ STATIC mp_obj_t mp_machine_hard_i2c_mem_read(size_t n_args, const mp_obj_t *args
     // get stop
     uint16_t int_mem_addr = mp_obj_get_int(args[3]);
 
-    uint8_t addr_size = mp_obj_get_int(args[4]);
-
-    if (!((addr_size == 16) || (addr_size == 8)))
+    if ((n_args == 5) || (n_args == 6))
     {
-        nlr_raise(mp_obj_new_exception_msg(&mp_type_ValueError, "addr_size can only be 8 or 16 bits"));
+        addr_size = mp_obj_get_int(args[4]);
+
+        if (!((addr_size == 16) || (addr_size == 8)))
+        {
+            nlr_raise(mp_obj_new_exception_msg(&mp_type_ValueError, "addr_size can only be 8 or 16 bits"));
+        }
+    }
+
+    if (n_args == 6)
+    {
+        timeout = mp_obj_get_int(args[5]);
+        timeout *= 6;
     }
 
     // pass to c-interface function
-    machine_hard_i2c_mem_read(args[0], i2c_data.buf, int_dev_address, int_mem_addr, i2c_data.len, addr_size);
+    machine_hard_i2c_mem_read(args[0], i2c_data.buf, int_dev_address, int_mem_addr, i2c_data.len, addr_size, timeout);
 
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mp_machine_hard_i2c_mem_read_obj, 4, 5, mp_machine_hard_i2c_mem_read);
+STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mp_machine_hard_i2c_mem_read_obj, 4, 6, mp_machine_hard_i2c_mem_read);
 
 STATIC mp_obj_t mp_machine_hard_i2c_send(mp_obj_t self_in, mp_obj_t data, mp_obj_t dev_addr)
 {
@@ -932,7 +945,6 @@ STATIC mp_obj_t mp_machine_hard_i2c_mem_write(size_t n_args, const mp_obj_t *arg
     if (n_args == 5)
     {
         int_mem_addr_size = mp_obj_get_int(args[4]);
-
     }
     else if (n_args == 4)
     {
