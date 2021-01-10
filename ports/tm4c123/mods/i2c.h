@@ -108,6 +108,8 @@ typedef struct _machine_hard_i2c_obj_t {
     uint16_t mode :2;
     uint32_t i2c_base;
     uint32_t periph;
+    uint32_t baudrate;
+    bool dma_flag;
     const pin_obj_t *pin_SDA;
     const pin_obj_t *pin_SCL;
     periph_i2c_master_t* master_regs;
@@ -120,10 +122,9 @@ typedef struct _machine_hard_i2c_obj_t {
     uint32_t err_reg;
 } machine_hard_i2c_obj_t;
 
-
 void i2c_init0(void);
-
-void InitI2C0(machine_hard_i2c_obj_t *self_in);
+void i2c_init(machine_hard_i2c_obj_t *self_in);
+void i2c_deinit(const mp_obj_t *self_in);
 
 void i2c_master_tx(mp_obj_t *self_in, uint8_t device_address, bool address_flag, uint16_t mem_loc, bool mem_loc_flag, uint8_t *device_data, size_t size);
 

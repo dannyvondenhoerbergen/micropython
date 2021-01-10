@@ -73,7 +73,7 @@ STATIC int i2c_find(mp_obj_t id)
 //initialize I2C module 0
 //Slightly modified version of TI's example code
 
-void InitI2C0(machine_hard_i2c_obj_t *self)
+void i2c_init(machine_hard_i2c_obj_t *self)
 {
     const pin_obj_t *pins[2] = {NULL, NULL};
 
@@ -168,13 +168,23 @@ void InitI2C0(machine_hard_i2c_obj_t *self)
     // be set to 400kbps.
     if (self->mode == I2C_MODE_MASTER)
     {
-        // Init Master Module for given I2C Port with normal Clock Frequency (100kHz)
-        I2CMasterInitExpClk(self->i2c_base, SysCtlClockGet(), false); // 0x40020000 = I2C0_BASE
+        // Init Master Module for given I2C Port with normal Clock Frequency
+        I2CMasterInitExpClk(self->i2c_base, SysCtlClockGet(), (self->baudrate == 100000) ? false : true);
+        if(self->dma_flag == true)
+        {
+            I2CTxFIFOConfigSet(self->i2c_base, I2C_FIFO_CFG_TX_MASTER_DMA);
+            I2CRxFIFOConfigSet(self->i2c_base, I2C_FIFO_CFG_RX_MASTER_DMA);
+        }
     }
     else if (self->mode == I2C_MODE_SLAVE)
     {
         // Init Slave Module for given I2C Port and Slave Address
         I2CSlaveInit(self->i2c_base, (uint8_t)self->i2c_id);
+        if(self->dma_flag == true)
+        {
+            I2CTxFIFOConfigSet(self->i2c_base, I2C_FIFO_CFG_TX_SLAVE_DMA);
+            I2CRxFIFOConfigSet(self->i2c_base, I2C_FIFO_CFG_RX_SLAVE_DMA);
+        }
     }
 
     //clear I2C FIFOs
@@ -536,10 +546,10 @@ STATIC void i2c_read_bytes_from_bus(mp_obj_t *self_in, uint8_t *buf, size_t len,
     }
 }
 
-void deinitI2C0(const mp_obj_t *self_in)
+void i2c_deinit(const mp_obj_t *self_in)
 {
     machine_hard_i2c_obj_t *self = (machine_hard_i2c_obj_t *)self_in;
-    //I2CDisable(self->i2c_base);
+    I2CMasterDisable(self->i2c_base);
     SysCtlPeripheralDisable(self->periph);
 }
 
@@ -550,34 +560,47 @@ STATIC void machine_hard_i2c_print(const mp_print_t *print, mp_obj_t self_in, mp
 {
     machine_hard_i2c_obj_t *i2c = (machine_hard_i2c_obj_t *)self_in;
 
-    mp_printf(print, "I2C(%u, scl=%q, sda=%q", i2c->i2c_id, i2c->pin_SCL->name, i2c->pin_SDA->name);
+    mp_printf(print, "I2C(%u, scl=%q, sda=%q, baudrate=%d bps", i2c->i2c_id, i2c->pin_SCL->name, i2c->pin_SDA->name, i2c->baudrate);
 
     if (i2c->mode == I2C_MODE_MASTER)
     {
-        mp_printf(print, ", I2C.MASTER)");
+        mp_printf(print, ", I2C.MASTER");
     }
     else if (i2c->mode == I2C_MODE_SLAVE)
     {
-        mp_printf(print, ", I2C.SLAVE)");
+        mp_printf(print, ", I2C.SLAVE");
     }
+
+    (i2c->dma_flag == true) ? mp_printf(print, ", DMA on)") : mp_printf(print, ", DMA off)");
 }
 
 STATIC mp_obj_t machine_hard_i2c_init_helper(mp_obj_t *self_in, size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args)
 {
     enum
     {
+        ARG_mode,
         ARG_id,
-        ARG_mode
+        ARG_baudrate,
+        ARG_dma
     };
+
     static const mp_arg_t allowed_args[] = {
-        {MP_QSTR_id, MP_ARG_REQUIRED | MP_ARG_INT, {.u_int = I2C_0}},            // default: I2C0
-        {MP_QSTR_mode, MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = I2C_MODE_MASTER}}, // default: Master
+        {MP_QSTR_mode, MP_ARG_REQUIRED | MP_ARG_INT, {.u_int = I2C_MODE_MASTER}}, // default: Master
+        {MP_QSTR_id, MP_ARG_INT, {.u_int = I2C_0}},
+        {MP_QSTR_baudrate, MP_ARG_INT, {.u_int = 400000}}, // default: 400Kbps
+        {MP_QSTR_dma, MP_ARG_KW_ONLY | MP_ARG_BOOL, {.u_bool = false}}, // default: Master
     };
 
     mp_arg_val_t args[MP_ARRAY_SIZE(allowed_args)];
     mp_arg_parse_all(n_args, pos_args, kw_args, MP_ARRAY_SIZE(allowed_args), allowed_args, args);
 
     machine_hard_i2c_obj_t *self = (machine_hard_i2c_obj_t *)self_in;
+    // set the I2C mode value
+    if (args[ARG_mode].u_int > I2C_MODE_SLAVE || args[ARG_mode].u_int < I2C_MODE_MASTER)
+    {
+        nlr_raise(mp_obj_new_exception_msg(&mp_type_ValueError, "Mode accepts only MASTER or SLAVE"));
+    }
+    self->mode = (uint16_t)(args[ARG_mode].u_int & 0xFFFF);;
 
     // set the I2C id value
     if (args[ARG_id].u_int > 3)
@@ -587,14 +610,17 @@ STATIC mp_obj_t machine_hard_i2c_init_helper(mp_obj_t *self_in, size_t n_args, c
     self->i2c_id = args[ARG_id].u_int;
 
     // set the I2C mode
-    if (args[ARG_mode].u_int > I2C_MODE_SLAVE)
+    if (!((args[ARG_baudrate].u_int == 100000) || (args[ARG_baudrate].u_int == 400000)))
     {
-        nlr_raise(mp_obj_new_exception_msg(&mp_type_ValueError, "Mode accepts only MASTER or SLAVE"));
+        nlr_raise(mp_obj_new_exception_msg(&mp_type_ValueError, "Available baudrates: 100000 Kbps / 400000 Kbps"));
     }
-    self->mode = (uint16_t)(args[ARG_mode].u_int & 0xFFFF);
+    self->baudrate =  args[ARG_baudrate].u_int;
 
-    // calling I2C-Init function
-    InitI2C0(self);
+    // store dma flag
+    self->dma_flag =  args[ARG_dma].u_bool;
+
+    // calling I2C-Init functioni2c_init
+    i2c_init(self);
 
     return mp_const_none;
 }
@@ -1003,13 +1029,13 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_machine_hard_i2c_scan_obj, mp_machine_hard_i
 
 /* DeInit Function */
 
-STATIC mp_obj_t i2c_deinit(mp_obj_t self_in)
+STATIC mp_obj_t mp_machine_hard_i2c_deinit(mp_obj_t self_in)
 {
-    deinitI2C0(&self_in);
+    i2c_deinit(&self_in);
 
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(i2c_deinit_obj, i2c_deinit);
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_machine_hard_i2c_deinit_obj, mp_machine_hard_i2c_deinit);
 
 /* Init Helper Function */
 
@@ -1039,7 +1065,7 @@ STATIC const mp_rom_map_elem_t machine_hard_i2c_locals_dict_table[] = {
     {MP_OBJ_NEW_QSTR(MP_QSTR_send), MP_ROM_PTR(&mp_machine_hard_i2c_send_obj)},
     {MP_OBJ_NEW_QSTR(MP_QSTR_mem_write), MP_ROM_PTR(&mp_machine_hard_i2c_mem_write_obj)},
     {MP_OBJ_NEW_QSTR(MP_QSTR_scan), MP_ROM_PTR(&mp_machine_hard_i2c_scan_obj)},
-    {MP_OBJ_NEW_QSTR(MP_QSTR_deinit), MP_ROM_PTR(&i2c_deinit_obj)},
+    {MP_OBJ_NEW_QSTR(MP_QSTR_deinit), MP_ROM_PTR(&mp_machine_hard_i2c_deinit_obj)},
 
     // constants
     {MP_ROM_QSTR(MP_QSTR_MASTER), MP_ROM_INT(I2C_MODE_MASTER)},
@@ -1063,20 +1089,19 @@ mp_obj_t machine_hard_i2c_make_new(const mp_obj_type_t *type, size_t n_args, siz
     // create dynamic peripheral object
     machine_hard_i2c_obj_t *self;
 
-    // get SPI object
-    if (MP_STATE_PORT(machine_i2c_obj_all)[i2c_id - 1] == NULL)
+    // get I2C object
+    if (MP_STATE_PORT(machine_i2c_obj_all)[i2c_id] == NULL)
     {
         // create new I2C object
         self = m_new0(machine_hard_i2c_obj_t, 1);
         self->base.type = &machine_hard_i2c_type;
         self->i2c_id = i2c_id;
-        MP_STATE_PORT(machine_i2c_obj_all)
-        [i2c_id - 1] = self;
+        MP_STATE_PORT(machine_i2c_obj_all)[i2c_id] = self;
     }
     else
     {
         // reference existing I2C object
-        self = MP_STATE_PORT(machine_i2c_obj_all)[i2c_id - 1];
+        self = MP_STATE_PORT(machine_i2c_obj_all)[i2c_id];
     }
 
     if (n_args > 1 || n_kw > 0)
