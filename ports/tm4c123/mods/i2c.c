@@ -523,7 +523,7 @@ STATIC void i2c_read_bytes_from_bus(mp_obj_t *self_in, uint8_t *buf, size_t len,
         }
         // mp_printf(MP_PYTHON_PRINTER, "rest of buffer read reached\nsize of data buffer: %d\n", len);
 
-        // send data to the slave
+        // read data from slave
         I2CMasterControl(self->i2c_base, (i == 0) ? I2C_MASTER_CMD_BURST_RECEIVE_START : I2C_MASTER_CMD_BURST_RECEIVE_CONT);
 
         // wait for Master Control Unit to finish transaction
@@ -759,20 +759,21 @@ STATIC void machine_hard_i2c_mem_read(mp_obj_base_t *self_in, uint8_t *buf, uint
 
 STATIC mp_obj_t machine_hard_i2c_recv(mp_obj_base_t *self_in, uint8_t dev_address, uint8_t *buf, uint8_t nbytes, uint32_t timeout)
 {
+    // utilize API functionalities
     machine_hard_i2c_obj_t *self = (machine_hard_i2c_obj_t *)self_in;
     uint8_t *local_buffer;
 
     local_buffer = buf;
     
+    // set timeout for i2c communication
     i2c_timeout_set_ms_100((mp_obj_t *)self_in, timeout);
 
+    // start i2c read routine
     initialize_i2c_read((mp_obj_t *)self_in, dev_address);
     machine_hard_i2c_start((mp_obj_base_t *)self_in);
 
     // read bytes from bus into buffer
     i2c_read_bytes_from_bus((mp_obj_t *)self, local_buffer, nbytes, 1);
-
-    mp_printf(MP_PYTHON_PRINTER, "finished bytes_from_bus\n");
 
     // terminate i2c read with stop
     machine_hard_i2c_stop(self_in);
