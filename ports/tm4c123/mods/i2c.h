@@ -62,7 +62,7 @@ typedef enum
 } i2c_id_t;
 
 // structs
-//registers
+// registers
 typedef struct
 {
     // Master Registers
@@ -82,7 +82,7 @@ typedef struct
 
 typedef struct
 {
-    //Slave Registers
+    // Slave Registers
     volatile uint32_t SOAR;    // Slave Own Address; 0x800
     volatile uint32_t SCSR;    // Slave Control/Status; 0x804
     volatile uint32_t SDR;     // Slave Data; 0x808
@@ -105,16 +105,16 @@ typedef struct
 // i2c object
 typedef struct _machine_hard_i2c_obj_t {
     mp_obj_base_t base;
-    uint16_t mode :2;
+    uint16_t mode : 2;
     uint32_t i2c_base;
     uint32_t periph;
     uint32_t baudrate;
     bool dma_flag;
     const pin_obj_t *pin_SDA;
     const pin_obj_t *pin_SCL;
-    periph_i2c_master_t* master_regs;
-    periph_i2c_slave_t* slave_regs;
-    periph_i2c_stctl_t* status_control;
+    periph_i2c_master_t *master_regs;
+    periph_i2c_slave_t *slave_regs;
+    periph_i2c_stctl_t *status_control;
     uint32_t irqn;
     i2c_id_t i2c_id : 3;
     bool is_enabled : 1;
